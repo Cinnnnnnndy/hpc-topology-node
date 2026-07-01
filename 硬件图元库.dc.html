@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/foundation.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/semantic.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/components.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/css/style.css">
+  <script src="entity-builders.js?v=226"></script>
+  <script src="icon-defs.js?v=221"></script>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}html,body{width:100%;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}</style>
+</helmet>
+
+<div style="width:100%;height:100vh;display:flex;flex-direction:column;background:var(--background);color:var(--foreground);">
+
+  <!-- Toolbar -->
+  <div style="height:44px;flex-shrink:0;display:flex;align-items:center;padding:0 16px;gap:12px;background:var(--background);border-bottom:1px solid var(--border-subtle);">
+    <div style="display:flex;align-items:center;gap:6px;padding-right:14px;border-right:1px solid var(--border-subtle);">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--foreground-secondary);"></div>
+      <span style="font-size:13px;font-weight:600;">PTO</span>
+      <span style="color:var(--foreground-muted);">·</span>
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--foreground-muted);">硬件图元库 · 13 图元</span>
+    </div>
+    <div style="display:flex;gap:2px;background:var(--surface-1);border-radius:7px;padding:2px;">
+      <button onClick="{{ onTab3d }}" style="font-family:var(--font-mono);font-size:11px;padding:3px 14px;border-radius:5px;border:none;cursor:pointer;background:{{ tab3dBg }};color:{{ tab3dColor }};font-weight:{{ tab3dW }};">3D 模型</button>
+      <button onClick="{{ onTab2d }}" style="font-family:var(--font-mono);font-size:11px;padding:3px 14px;border-radius:5px;border:none;cursor:pointer;background:{{ tab2dBg }};color:{{ tab2dColor }};font-weight:{{ tab2dW }};">2D 图标</button>
+    </div>
+    <span style="font-size:11px;color:var(--foreground-muted);">{{ tabHint }}</span>
+    <div style="flex:1;"></div>
+    <button onClick="{{ onThemeToggle }}" style="font-family:var(--font-mono);font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border-default);background:transparent;color:var(--foreground-muted);cursor:pointer;">{{ themeBtnLabel }}</button>
+  </div>
+
+  <!-- Body -->
+  <div style="flex:1;display:flex;overflow:hidden;">
+
+    <!-- 3D canvas pane -->
+    <sc-if value="{{ is3d }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;position:relative;overflow:hidden;" id="hw3d-wrap">
+        <div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);pointer-events:none;z-index:2;">
+          <sc-for list="{{ cells3d }}" as="cell" hint-placeholder-count="16">
+            <div style="position:relative;border-right:1px solid {{ cell.bd }};border-bottom:1px solid {{ cell.bd }};background:{{ cell.bg }};outline:{{ cell.ol }};outline-offset:-1px;">
+              <sc-if value="{{ cell.on }}" hint-placeholder-val="{{ true }}">
+                <div style="position:absolute;top:7px;left:8px;display:flex;align-items:center;gap:4px;">
+                  <div style="width:4px;height:4px;border-radius:50%;background:{{ cell.lc }};"></div>
+                  <span style="font-family:var(--font-mono);font-size:10px;font-weight:500;color:{{ cell.lc }};text-transform:uppercase;">{{ cell.lv }}</span>
+                </div>
+                <div style="position:absolute;bottom:7px;left:8px;right:8px;">
+                  <div style="font-size:12px;font-weight:600;color:var(--foreground);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ cell.label }}</div>
+                  <div style="font-family:var(--font-mono);font-size:10px;color:var(--foreground-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ cell.ln }}</div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 2D icon grid pane -->
+    <sc-if value="{{ is2d }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow:auto;padding:16px 20px;">
+        <div style="display:grid;grid-template-columns:108px repeat(6,1fr);gap:4px;margin-bottom:8px;position:sticky;top:0;background:var(--background);z-index:1;padding-bottom:6px;border-bottom:1px solid var(--border-subtle);">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--foreground-disabled);">图元</div>
+          <sc-for list="{{ stateHeaders }}" as="sh" hint-placeholder-count="6">
+            <div style="font-family:var(--font-mono);font-size:10px;font-weight:600;color:{{ sh.color }};text-align:center;">{{ sh.label }}</div>
+          </sc-for>
+        </div>
+        <sc-for list="{{ entities2d }}" as="ent" hint-placeholder-count="13">
+          <div onClick="{{ ent.onSelect }}" style="display:grid;grid-template-columns:108px repeat(6,1fr);gap:4px;margin-bottom:4px;padding:4px;border-radius:6px;cursor:pointer;background:{{ ent.rowBg }};border:1px solid {{ ent.rowBorder }};">
+            <div style="display:flex;flex-direction:column;justify-content:center;padding:2px 4px;">
+              <div style="font-size:12px;font-weight:600;color:var(--foreground);line-height:1.3;">{{ ent.label }}</div>
+              <div style="font-family:var(--font-mono);font-size:9px;color:var(--foreground-muted);margin-top:1px;">{{ ent.lv }}</div>
+            </div>
+            <sc-for list="{{ ent.cells }}" as="ec" hint-placeholder-count="6">
+              <div style="height:48px;background:{{ ec.bg }};border-radius:4px;border:1px solid {{ ec.border }};overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                {{ ec.icon }}
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Right inspector panel (shared) -->
+    <div style="width:232px;flex-shrink:0;background:var(--background);border-left:1px solid var(--border-subtle);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border-subtle);">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.7px;color:var(--foreground-muted);text-transform:uppercase;margin-bottom:8px;">SELECTED</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <div style="width:5px;height:5px;border-radius:50%;background:{{ iLc }};flex-shrink:0;"></div>
+          <span style="font-family:var(--font-mono);font-size:10px;font-weight:500;color:{{ iLc }};text-transform:uppercase;letter-spacing:.4px;">{{ iLv }}</span>
+        </div>
+        <div style="font-size:15px;font-weight:600;color:var(--foreground);margin-bottom:2px;">{{ iLabel }}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--foreground-muted);">{{ iLn }}</div>
+      </div>
+
+      <!-- Status selector -->
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border-subtle);">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.7px;color:var(--foreground-muted);text-transform:uppercase;margin-bottom:8px;">STATUS</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;">
+          <sc-for list="{{ statusBtns }}" as="sb" hint-placeholder-count="5">
+            <button onClick="{{ sb.onClick }}" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;border-radius:6px;border:1px solid {{ sb.activeBorder }};background:{{ sb.activeBg }};cursor:pointer;">
+              <div style="width:6px;height:6px;border-radius:50%;background:{{ sb.dot }};"></div>
+              <span style="font-family:var(--font-mono);font-size:9px;color:{{ sb.activeColor }};white-space:nowrap;">{{ sb.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- 2D status swatches (only in 2D tab) -->
+      <sc-if value="{{ is2d }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--border-subtle);">
+          <div style="font-size:10px;font-weight:600;letter-spacing:.6px;color:var(--foreground-muted);text-transform:uppercase;margin-bottom:8px;">VARIANTS</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <sc-for list="{{ inspSwatches }}" as="sw" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+                <div style="width:44px;height:33px;border:1px solid var(--border-subtle);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--surface-1);">{{ sw.icon }}</div>
+                <span style="font-family:var(--font-mono);font-size:9px;color:{{ sw.color }};">{{ sw.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 3D features (only in 3D tab) -->
+      <sc-if value="{{ is3d }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:12px 14px;font-size:12px;color:var(--foreground-secondary);line-height:1.6;border-bottom:1px solid var(--border-subtle);">{{ iDesc }}</div>
+        <div style="padding:14px;flex:1;overflow:auto;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:.7px;color:var(--foreground-muted);text-transform:uppercase;margin-bottom:8px;">FEATURES</div>
+          <sc-for list="{{ iSp }}" as="sp" hint-placeholder-count="3">
+            <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px;">
+              <div style="width:3px;height:3px;border-radius:50%;background:var(--border-strong);flex-shrink:0;margin-top:5px;"></div>
+              <span style="font-size:12px;color:var(--foreground-secondary);line-height:1.5;">{{ sp }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:720}}">
+class Component extends DCLogic {
+  state = { tab:'3d', sel:0, selId:'superpod', theme:'light', statusKey:'default' };
+
+  _DEFS = [
+    {id:'superpod',label:'SuperPoD',ln:'Super Node',lv:'L7',lc:'#7C8DB8',desc:'超节点 = 机柜列阵（计算柜 + 交换柜穿插），any-to-any 全连接。',sp:['6 计算柜 + 2 交换柜交替排列','顶部骨架导轨','scale-out RDMA 出口'],c:[12,7,12],k:[0,2,0],r:.35},
+    {id:'rack',label:'机柜 Rack',ln:'Server Rack',lv:'L6',lc:'#78797d',desc:'物理机柜，高立式，容纳多块刀片 + 柜级 UB L2 交换。',sp:['开放式四柱框架 · U 槽层叠','L2 UB 交换在柜顶','侧边 LED 光柱'],c:[3,2.5,3],k:[0,1.8,0],r:.3},
+    {id:'blade',label:'刀片 Blade',ln:'Compute Node',lv:'L5',lc:'#78797d',desc:'横插式计算节点：1 鲲鹏 CPU + 8 NPU，节点内 L1 UB 交换互联。',sp:['扁平横向托盘','前面板双把手 + LED 条','顶面 NPU 散热鳍片块'],c:[3.5,2.5,4.5],k:[0,0,0],r:.5},
+    {id:'npu',label:'NPU / rank',ln:'Ascend 950',lv:'L4',lc:'#4369EF',desc:'参考昇腾 950：正方形封装 + IHS 银灰金属框 + die 功能块窗口。',sp:['正方形 IHS 金属框','暗色 die 窗口内功能块','底边连接器触点'],c:[2.2,1.6,2.5],k:[0,.05,0],r:.3,rx:-.18},
+    {id:'die',label:'Die + HBM',ln:'Die Pair on Substrate',lv:'L3',lc:'#FFAA3B',desc:'计算晶粒：AI Core 阵列 + NoC + HBM，die 间 D2D 784 GB/s。',sp:['封装基板上 1~2 个方形 die','功能区色块暗示 AI Core 阵列','HBM 横向堆叠条'],c:[.38,.26,.42],k:[0,.02,0],r:.5},
+    {id:'hbm',label:'HBM Stack',ln:'High-BW Memory',lv:'HBM',lc:'#7C8DB8',desc:'高带宽存储，紧邻 die 的横向堆叠薄块（3~4层），每层渐宽。',sp:['3~4层横向堆叠薄块','每层渐宽','层间互连 bump'],c:[.38,.32,.38],k:[0,.12,0],r:.4},
+    {id:'aicore',label:'AI Core',ln:'DaVinci AI Core',lv:'L2',lc:'#04D793',desc:'达芬奇架构：AIC Cube + AIV Vector + Scalar，比例约 8:1。',sp:['AIC=浅灰方块阵列','AIV=中灰竖条纹','Scalar=深灰小块'],c:[2.2,1.6,2.6],k:[0,.1,0],r:-.3},
+    {id:'tile',label:'Tile',ln:'Compute Tile',lv:'L1',lc:'#04D793',desc:'最细计算粒度：Cube/Vector 的一个 tile。',sp:['Core 网格里点亮的一格（绿）','其余格保持中性灰'],c:[.14,.1,.16],k:[0,.002,0],r:.2},
+    {id:'ub_switch',label:'UB Switch',ln:'UB Spine / L2',lv:'交换',lc:'#4369EF',desc:'交换板：满配端口面板 + LPO 800G 光模块笼。',sp:['横置交换板','前面板端口/光笼一排','LPO 光纤尾纤'],c:[4.5,2.2,4.5],k:[0,0,0],r:.35},
+    {id:'cpu',label:'CPU 鲲鹏',ln:'Kunpeng 920 + LGA',lv:'CPU',lc:'#78797d',desc:'鲲鹏 920：深色 LGA 保留框 + 银灰薄 IHS 面板，四角安装螺丝。',sp:['深色金属保留框（retention bracket）','IHS 银灰薄面板','四角黄铜安装螺丝'],c:[3.2,2.4,3.8],k:[0,.22,0],r:.28,rx:-.12},
+    {id:'lpo',label:'LPO 800G',ln:'LPO Optical Module',lv:'光模块',lc:'#7C8DB8',desc:'可插拔光模块 + 光纤尾纤，柜间光互联。',sp:['小长方收发模块','光纤辫尾纤','接在卡/交换端口'],c:[.5,.32,.52],k:[0,.02,0],r:.5},
+    {id:'nic',label:'NIC 擎天',ln:'Qingtian NIC',lv:'NIC',lc:'#78797d',desc:'网卡：小板 + 1~2 个网口，走 VPC 平面（南北向）。',sp:['小板卡 + 1~2 个网口','明显比 NPU 卡小','走 VPC 平面'],c:[1.8,1.2,2],k:[0,.05,0],r:.4},
+    {id:'port',label:'端口 Port',ln:'UB + RDMA Ports',lv:'端口',lc:'#FFAA3B',desc:'卡/交换面板连接器笼。UB 口密排，RDMA 口独立。',sp:['UB 口：密排（Scale-up）','RDMA 口：独立（Scale-out）'],c:[.5,.3,.5],k:[0,0,0],r:.2},
+    {id:'_e1',empty:true},{id:'_e2',empty:true},{id:'_e3',empty:true},
+  ];
+
+  _STATES2D = [
+    {key:'def',  label:'默认',  bg:'transparent', border:'transparent', led:null},
+    {key:'hov',  label:'Hover', bg:'rgba(120,121,125,0.09)', border:'rgba(120,121,125,.3)', led:null},
+    {key:'sel',  label:'选中',  bg:'rgba(67,105,239,0.10)', border:'#4369EF', led:null},
+    {key:'idle', label:'空闲',  bg:'transparent', border:'transparent', led:'#04D793'},
+    {key:'warn', label:'告警',  bg:'transparent', border:'transparent', led:'#FFAA3B'},
+    {key:'busy', label:'繁忙',  bg:'transparent', border:'transparent', led:'#FF4B7B'},
+  ];
+
+  _STATUS_BTNS = [
+    {key:'default', label:'默认',  dot:'#888888'},
+    {key:'idle',    label:'空闲',  dot:'#04D793'},
+    {key:'warn',    label:'告警',  dot:'#FFAA3B'},
+    {key:'busy',    label:'繁忙',  dot:'#FF4B7B'},
+    {key:'offline', label:'离线',  dot:'#5A6172'},
+  ];
+
+  componentDidMount() {
+    document.documentElement.setAttribute('data-theme','light');
+    this._CL = {
+      BG:0xF0F1F1, LITE:0xF7F8F8, E9:0xE9E9E9, MAIN:0xCCCDD0, DEEP:0xC4C4C4,
+      METAL:0x6F7072, DARK:0x3D3D3D, GLINE:0xD8D8D8, SWITCH:0x6F7072,
+      HBM:0xCCCDD0, AIC:0xE9E9E9, AIV:0xC4C4C4, SCAL:0xCCCDD0,
+      GOLD:0xC8A855, BRASS:0xB8A06A, COPPER:0xA07860,
+      BLUE:0x4369EF, GREEN:0x04D793, AMBER:0xFFAA3B,
+      RED:0xFF4B7B, ACNT:0x7C8DB8, EDGE:0xA0A0A0, STATUS:0x9a9a9a,
+    };
+    this._CD = {
+      BG:0x313232, MAIN:0x535151, DEEP:0x5a5a5a, LITE:0x78797d, DARK:0x2e2e2e,
+      METAL:0x5a5a5a, GLINE:0x2a2929, SWITCH:0x2e3d52,
+      HBM:0x484848, AIC:0x484848, AIV:0x404040, SCAL:0x525050,
+      GOLD:0x8B6914, BRASS:0x8B7040, COPPER:0x7A5C52,
+      BLUE:0x4369EF, GREEN:0x04D793, AMBER:0xFFAA3B,
+      RED:0xFF4B7B, ACNT:0x7C8DB8, EDGE:0x181818, STATUS:0x3a3a3a,
+      E9:0x484848,
+    };
+    this._C = this._CL;
+    this._cells3d = []; this._canvas = null; this._renderer = null;
+    this._raf = null; this._W = 0; this._H = 0;
+    this._statusKey = 'default';
+    this.forceUpdate();
+    this._loadThree();
+  }
+
+  _loadThree() {
+    if(window.THREE){ this._init3D(); return; }
+    if(!document.getElementById('__three_cdn')){
+      const s=document.createElement('script');
+      s.id='__three_cdn';
+      s.src='https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js';
+      s.onload=()=>this._init3D();
+      document.head.appendChild(s);
+    } else { const p=()=>window.THREE?this._init3D():setTimeout(p,60); p(); }
+  }
+
+  _init3D() {
+    const T=window.THREE, wrap=document.getElementById('hw3d-wrap');
+    if(!T||!wrap) return;
+    if(this._canvas&&this._canvas.parentNode) this._canvas.parentNode.removeChild(this._canvas);
+    const cv=document.createElement('canvas');
+    cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;cursor:pointer;';
+    wrap.insertBefore(cv,wrap.firstChild);
+    this._canvas=cv;
+    this._W=wrap.clientWidth; this._H=wrap.clientHeight;
+    this._renderer=new T.WebGLRenderer({canvas:cv,antialias:true});
+    this._renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    this._renderer.setSize(this._W,this._H,false);
+    this._ro=new ResizeObserver(()=>{
+      this._W=wrap.clientWidth; this._H=wrap.clientHeight;
+      if(this._renderer) this._renderer.setSize(this._W,this._H,false);
+    });
+    this._ro.observe(wrap);
+    this._buildScenes(T);
+    const onMouse=e=>{
+      const r=cv.getBoundingClientRect();
+      const col=Math.floor((e.clientX-r.left)/(r.width/4));
+      const row=Math.floor((e.clientY-r.top)/(r.height/4));
+      const idx=row*4+col;
+      const def=this._DEFS[idx];
+      if(def&&!def.empty&&idx!==this.state.sel){
+        const selDef=this._DEFS.filter(d=>!d.empty)[idx]||def;
+        this.setState({sel:idx, selId:def.id});
+      }
+    };
+    cv.addEventListener('mousemove',onMouse); cv.addEventListener('click',onMouse);
+    cancelAnimationFrame(this._raf);
+    this._raf=requestAnimationFrame(this._tickFn);
+  }
+
+  _makeHelpers(T) {
+    const C=this._C;
+    const isLight=C.EDGE===0xA0A0A0;
+    const shininess=isLight?18:28, specHex=isLight?0x060606:0x1a1a1a;
+    const phong=c=>new T.MeshPhongMaterial({color:c,shininess,specular:new T.Color(specHex),polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
+    const basic=c=>new T.MeshBasicMaterial({color:c,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
+    const ec=C.EDGE||0x181818;
+    const em=()=>new T.LineBasicMaterial({color:ec,transparent:true,opacity:isLight?.30:.20,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+    const bm=(w,h,d,c)=>{const g=new T.BoxGeometry(w,h,d),grp=new T.Group();grp.add(new T.Mesh(g,phong(c)));grp.add(new T.LineSegments(new T.EdgesGeometry(g),em()));return grp;};
+    const rb=(w,h,d,r,c)=>{
+      const rx=Math.min(Math.abs(r),Math.min(Math.abs(w),Math.abs(d))*.44);
+      const hw=w/2,hd=d/2,sh=new T.Shape();
+      sh.moveTo(-hw+rx,-hd); sh.lineTo(hw-rx,-hd);
+      sh.absarc(hw-rx,-hd+rx,rx,-Math.PI/2,0,false);
+      sh.lineTo(hw,hd-rx); sh.absarc(hw-rx,hd-rx,rx,0,Math.PI/2,false);
+      sh.lineTo(-hw+rx,hd); sh.absarc(-hw+rx,hd-rx,rx,Math.PI/2,Math.PI,false);
+      sh.lineTo(-hw,-hd+rx); sh.absarc(-hw+rx,-hd+rx,rx,Math.PI,Math.PI*1.5,false);
+      sh.closePath();
+      const geo=new T.ExtrudeGeometry(sh,{depth:h,bevelEnabled:false,steps:1});
+      geo.rotateX(-Math.PI/2); geo.translate(0,-h/2,0);
+      const grp=new T.Group(); grp.add(new T.Mesh(geo,phong(c)));
+      const e=em(),pts=sh.getPoints(32);
+      [h/2,-h/2].forEach(yv=>{const p=pts.map(pt=>new T.Vector3(pt.x,yv,-pt.y));p.push(p[0].clone());grp.add(new T.Line(new T.BufferGeometry().setFromPoints(p),e));});
+      return grp;
+    };
+    return {bm,rb,bl:(w,h,d,c)=>new T.Mesh(new T.BoxGeometry(w,h,d),basic(c)),b:(w,h,d)=>new T.BoxGeometry(w,h,d),s:(c)=>phong(c),k:(c)=>basic(c),cyl:(rt,rb2,h,sg)=>new T.CylinderGeometry(rt,rb2,h,sg||8)};
+  }
+
+  _buildScenes(T) {
+    const C=this._C;
+    (this._cells3d||[]).forEach(cell=>{if(!cell)return;cell.sc.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});});
+    this._cells3d=[];
+    if(this._renderer) this._renderer.setClearColor(C.BG,1);
+    const hb=this._makeHelpers(T);
+    this._DEFS.forEach(d=>{
+      if(d.empty){this._cells3d.push(null);return;}
+      const sc=new T.Scene(); sc.background=new T.Color(C.BG);
+      sc.add(new T.AmbientLight(0xffffff,.70));
+      const kl=new T.DirectionalLight(0xffffff,.65); kl.position.set(5,8,6); sc.add(kl);
+      const fl=new T.DirectionalLight(0xdde8ff,.18); fl.position.set(-4,3,-2); sc.add(fl);
+      const gr=new T.GridHelper(14,14,C.GLINE,C.GLINE); gr.position.y=-.5; sc.add(gr);
+      const rg=new T.Group(); rg.rotation.y=d.r||0; if(d.rx) rg.rotation.x=d.rx; sc.add(rg);
+      try{const fn=window.HWENT&&window.HWENT[d.id]; if(fn) fn(rg,C,T,hb);}
+      catch(e){console.warn('[HW3D]',d.id,e.message);}
+      const cam=new T.PerspectiveCamera(42,1,.001,200);
+      cam.position.set(d.c[0],d.c[1],d.c[2]); cam.lookAt(d.k[0],d.k[1],d.k[2]);
+      this._cells3d.push({sc,cam,rg});
+    });
+  }
+
+  _tickFn = () => {
+    this._raf=requestAnimationFrame(this._tickFn);
+    if(!this._renderer||!this._W||!this._H||this.state.tab!=='3d') return;
+    const W=this._W,H=this._H,cW=Math.floor(W/4),cH=Math.floor(H/4);
+    this._cells3d.forEach((cell,i)=>{
+      if(!cell) return;
+      cell.rg.rotation.y+=.005;
+      const col=i%4,row=Math.floor(i/4),x=col*cW,y=H-(row+1)*cH;
+      cell.cam.aspect=cW/cH; cell.cam.updateProjectionMatrix();
+      this._renderer.setViewport(x,y,cW,cH);
+      this._renderer.setScissor(x,y,cW,cH);
+      this._renderer.setScissorTest(true);
+      this._renderer.render(cell.sc,cell.cam);
+    });
+  };
+
+  _applyStatus(key) {
+    this._statusKey = key;
+    const MAP={default:null,idle:0x04D793,warn:0xFFAA3B,busy:0xFF4B7B,offline:'offline'};
+    const v=MAP[key];
+
+    const clamp=n=>Math.max(0,Math.min(255,Math.round(n)));
+
+    const blend=(base,tint,ratio)=>{
+      const br=(base>>16)&0xFF,bg=(base>>8)&0xFF,bb=base&0xFF;
+      const tr=(tint>>16)&0xFF,tg=(tint>>8)&0xFF,tb=tint&0xFF;
+      return (clamp(br*(1-ratio)+tr*ratio)<<16)|(clamp(bg*(1-ratio)+tg*ratio)<<8)|clamp(bb*(1-ratio)+tb*ratio);
+    };
+    if(v==='offline'){
+      // Offline: restore base palette + gray-out via opacity
+      Object.assign(this._CL,{MAIN:0xCCCDD0,DEEP:0xC4C4C4,LITE:0xF7F8F8,AIC:0xE9E9E9,AIV:0xC4C4C4,HBM:0xCCCDD0,METAL:0x6F7072,DARK:0x3D3D3D,SWITCH:0x6F7072,STATUS:0x888888});
+      Object.assign(this._CD,{MAIN:0x535151,DEEP:0x5a5a5a,LITE:0x78797d,AIC:0x484848,AIV:0x404040,HBM:0x484848,METAL:0x5a5a5a,DARK:0x2e2e2e,SWITCH:0x2e3d52,STATUS:0x666666});
+    } else if(v!=null){
+      // Active status: SUBTLE tint wash on main body, FULL saturation reserved for LED/key regions
+      // — easy to scan many nodes at once: faint color = which state, bright LED = confirm/locate
+      const ratio=0.22;
+      this._CL.MAIN   = blend(0xCCCDD0, v, ratio);
+      this._CL.DEEP   = blend(0xC4C4C4, v, ratio);
+      this._CL.LITE   = blend(0xF7F8F8, v, ratio*0.65);
+      this._CL.AIC    = blend(0xE9E9E9, v, ratio*0.85);
+      this._CL.AIV    = blend(0xC4C4C4, v, ratio);
+      this._CL.HBM    = blend(0xCCCDD0, v, ratio);
+      this._CL.METAL  = blend(0x6F7072, v, ratio*0.8);
+      this._CL.DARK   = blend(0x3D3D3D, v, ratio*0.55);
+      this._CL.SWITCH = blend(0x6F7072, v, ratio*0.8);
+      this._CL.STATUS = v; // LED/key regions = full saturated status color
+
+      this._CD.MAIN   = blend(0x535151, v, ratio);
+      this._CD.DEEP   = blend(0x5a5a5a, v, ratio);
+      this._CD.LITE   = blend(0x78797d, v, ratio*0.65);
+      this._CD.AIC    = blend(0x484848, v, ratio*0.85);
+      this._CD.AIV    = blend(0x404040, v, ratio);
+      this._CD.HBM    = blend(0x484848, v, ratio);
+      this._CD.METAL  = blend(0x5a5a5a, v, ratio*0.8);
+      this._CD.DARK   = blend(0x2e2e2e, v, ratio*0.55);
+      this._CD.SWITCH = blend(0x2e3d52, v, ratio*0.8);
+      this._CD.STATUS = v;
+    } else {
+      // Default: restore original neutral palette
+      Object.assign(this._CL,{MAIN:0xCCCDD0,DEEP:0xC4C4C4,LITE:0xF7F8F8,AIC:0xE9E9E9,AIV:0xC4C4C4,HBM:0xCCCDD0,METAL:0x6F7072,DARK:0x3D3D3D,SWITCH:0x6F7072,STATUS:0x9a9a9a});
+      Object.assign(this._CD,{MAIN:0x535151,DEEP:0x5a5a5a,LITE:0x78797d,AIC:0x484848,AIV:0x404040,HBM:0x484848,METAL:0x5a5a5a,DARK:0x2e2e2e,SWITCH:0x2e3d52,STATUS:0x3a3a3a});
+    }
+
+    this._C.MAIN=this.state.theme==='dark'?this._CD.MAIN:this._CL.MAIN;
+    this._C.DEEP=this.state.theme==='dark'?this._CD.DEEP:this._CL.DEEP;
+    this._C.LITE=this.state.theme==='dark'?this._CD.LITE:this._CL.LITE;
+    this._C.AIC =this.state.theme==='dark'?this._CD.AIC :this._CL.AIC;
+    this._C.AIV =this.state.theme==='dark'?this._CD.AIV :this._CL.AIV;
+    this._C.HBM =this.state.theme==='dark'?this._CD.HBM :this._CL.HBM;
+    this._C.METAL =this.state.theme==='dark'?this._CD.METAL :this._CL.METAL;
+    this._C.DARK  =this.state.theme==='dark'?this._CD.DARK  :this._CL.DARK;
+    this._C.SWITCH=this.state.theme==='dark'?this._CD.SWITCH:this._CL.SWITCH;
+    this._C.STATUS=this.state.theme==='dark'?this._CD.STATUS:this._CL.STATUS;
+    // Drill-down highlight flag: entity-builders.js reads C._ACTIVE to decide
+    // whether "next level down" child elements (blades, chips, cubes...) show full STATUS color
+    this._C._ACTIVE = (v!=null && v!=='offline');
+
+    if(this._renderer&&window.THREE) this._buildScenes(window.THREE);
+    if(key==='offline'){
+      (this._cells3d||[]).forEach(cell=>{if(!cell)return;cell.sc.traverse(obj=>{if(obj.material){const ms=Array.isArray(obj.material)?obj.material:[obj.material];ms.forEach(m=>{m.opacity=0.42;m.transparent=true;m.needsUpdate=true;});}});});
+    }
+    this.setState({statusKey:key});
+  }
+
+  _setTheme(t) {
+    this._C=t==='dark'?this._CD:this._CL;
+    if(t==='dark') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme','light');
+    if(this._renderer&&window.THREE) this._buildScenes(window.THREE);
+    this.setState({theme:t});
+  }
+
+  renderVals() {
+    const D=this._DEFS||[], sel=this.state.sel, tab=this.state.tab;
+    const th=this.state.theme, light=th==='light';
+    const curSt=this.state.statusKey||'default';
+    const bd=light?'rgba(0,0,0,.07)':'rgba(255,255,255,.07)';
+    const selDef=D.find(d=>d.id===this.state.selId)||D[0]||{};
+    const B=window.HWICONS&&window.HWICONS.build;
+
+    const stateHeaders=this._STATES2D.map(st=>({
+      label:st.label,
+      color:st.key==='idle'?'#04D793':st.key==='warn'?'#FFAA3B':st.key==='busy'?'#FF4B7B':st.key==='sel'?'#7c9ef8':'var(--foreground-muted)',
+    }));
+
+    const entities2d=D.filter(d=>!d.empty).map(d=>({
+      ...d,
+      rowBg:d.id===this.state.selId?'rgba(67,105,239,.05)':'transparent',
+      rowBorder:d.id===this.state.selId?'rgba(67,105,239,.3)':'transparent',
+      onSelect:()=>this.setState({selId:d.id}),
+      cells:this._STATES2D.map(st=>({
+        bg:st.bg, border:st.border,
+        icon:B?B(d.id,st.led,React,light):null,
+      })),
+    }));
+
+    const inspSwatches=B?[
+      {label:'空闲',color:'#04D793',icon:B(selDef.id,'#04D793',React,light)},
+      {label:'告警',color:'#FFAA3B',icon:B(selDef.id,'#FFAA3B',React,light)},
+      {label:'繁忙',color:'#FF4B7B',icon:B(selDef.id,'#FF4B7B',React,light)},
+      {label:'离线',color:'#5A6172',icon:B(selDef.id,'#5A6172',React,light)},
+    ]:[];
+
+    const is3d=tab==='3d', is2d=tab==='2d';
+    const tabActive='var(--background)', tabInactive='transparent';
+    const tabActiveC='var(--foreground)', tabInactiveC='var(--foreground-muted)';
+
+    return {
+      is3d, is2d,
+      tab3dBg:is3d?tabActive:tabInactive, tab3dColor:is3d?tabActiveC:tabInactiveC, tab3dW:is3d?'600':'400',
+      tab2dBg:is2d?tabActive:tabInactive, tab2dColor:is2d?tabActiveC:tabInactiveC, tab2dW:is2d?'600':'400',
+      tabHint:is3d?'13 图元 · 三维视图 · 悬停选中':'13 图元 × 6 状态 · 点击行查看',
+      onTab3d:()=>{this.setState({tab:'3d'});setTimeout(()=>this._init3D&&this._init3D(),80);},
+      onTab2d:()=>this.setState({tab:'2d'}),
+      themeBtnLabel:th==='dark'?'☀ 浅色':'◑ 深色',
+      onThemeToggle:()=>this._setTheme(th==='dark'?'light':'dark'),
+      cells3d:D.map((d,i)=>({
+        on:!d.empty, label:d.label||'', ln:d.ln||'', lv:d.lv||'', lc:d.lc||'#78797d',
+        bg:i===sel?(light?'rgba(67,105,239,.06)':'rgba(67,105,239,.09)'):'transparent',
+        ol:i===sel?'1px solid rgba(67,105,239,.35)':'none', bd,
+      })),
+      stateHeaders, entities2d, inspSwatches,
+      iLabel:selDef.label||'—', iLn:selDef.ln||'', iLv:selDef.lv||'',
+      iLc:selDef.lc||'#78797d', iDesc:selDef.desc||'', iSp:selDef.sp||[],
+      statusBtns:this._STATUS_BTNS.map(s=>({
+        label:s.label, dot:s.dot,
+        activeBg:curSt===s.key?s.dot+'22':'transparent',
+        activeBorder:curSt===s.key?s.dot:'var(--border-subtle)',
+        activeColor:curSt===s.key?s.dot:'var(--foreground-muted)',
+        onClick:()=>this._applyStatus(s.key),
+      })),
+    };
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this._raf);
+    this._ro?.disconnect();
+    if(this._renderer){this._renderer.dispose();this._renderer=null;}
+    if(this._canvas&&this._canvas.parentNode) this._canvas.parentNode.removeChild(this._canvas);
+  }
+}
+</script>
+</body>
+</html>

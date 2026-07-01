@@ -15,6 +15,16 @@
 window.HWENT = {};
 const E = window.HWENT;
 
+// Blend helper: mix base color toward tint at given ratio (0-1) — same technique as 2D icons
+// Keeps gray gradient visible underneath (a "wash", not a flat swap) for drill-down highlights
+const mix=(base,tint,ratio)=>{
+  const br=(base>>16)&0xFF,bg=(base>>8)&0xFF,bb=base&0xFF;
+  const tr=(tint>>16)&0xFF,tg=(tint>>8)&0xFF,tb=tint&0xFF;
+  const r=Math.round(br*(1-ratio)+tr*ratio), g=Math.round(bg*(1-ratio)+tg*ratio), b=Math.round(bb*(1-ratio)+tb*ratio);
+  return (r<<16)|(g<<8)|b;
+};
+const HI_RATIO = 0.68; // drill-down highlight blend ratio — strong but keeps base tone showing through
+
 E.superpod = (g,C,T,H) => {
   // Atlas 950 / CloudMatrix style: rack row + interspersed switch racks + UB fiber canopy
   const RH=3.8,RW=0.55,RD=0.65,SP=0.78;
@@ -46,44 +56,15 @@ E.superpod = (g,C,T,H) => {
       // U-slot lines: depth INSIDE rack (RD-0.02) to avoid front/back surface z-fight
       for(let u=0;u<9;u++){const sl=H.bl(RW-0.05,0.006,RD-0.02,C.DARK);sl.position.set(0,0.38+u*0.38,0);rg.add(sl);}
       // Blade strips: fp front face at RD/2+0.020, strips at RD/2+0.026 (0.006 clear)
-      for(let b=0;b<6;b++){const bf=H.bl(RW-0.08,0.10,0.008,C.DEEP);bf.position.set(0,0.42+b*0.52,RD/2+0.026);rg.add(bf);}
+      // Drill-down highlight: blades represent next level down — light up under active status
+      const hiBlade = C._ACTIVE ? mix(C.DEEP, C.STATUS, HI_RATIO) : C.DEEP;
+      for(let b=0;b<6;b++){const bf=H.bl(RW-0.08,0.10,0.008,hiBlade);bf.position.set(0,0.42+b*0.52,RD/2+0.026);rg.add(bf);}
     }
     // Status LED column: tall visible strip on side
     const led=H.bl(0.032,RH*0.74,0.032,C.STATUS); led.position.set(RW/2+0.020,RH*0.5,RD/4); rg.add(led);
     g.add(rg);
   }
 
-  // UB Fiber canopy — the soul: TubeGeometry arcs from compute racks to switch racks
-  const canopyY=RH+0.07;
-  const swX=SW_IDX.map(i=>(i-(N-1)/2)*SP);
-  for(let i=0;i<N;i++){
-    if(SW_IDX.includes(i)) continue;
-    const cx=(i-(N-1)/2)*SP;
-    swX.forEach((sx,si)=>{
-      const zOff=(si-0.5)*0.14+(i%3-1)*0.05;
-      const peak=0.42+Math.abs(cx-sx)*0.055;
-      const curve=new T.QuadraticBezierCurve3(
-        new T.Vector3(cx,canopyY,zOff-0.04),
-        new T.Vector3((cx+sx)/2,canopyY+peak,zOff),
-        new T.Vector3(sx,canopyY,zOff+0.04)
-      );
-      const tube=new T.TubeGeometry(curve,10,0.015,4,false);
-      g.add(new T.Mesh(tube,H.k(C.STATUS)));
-    });
-  }
-
-  // Top backbone rail (DARK)
-  const railW=(N-1)*SP+RW+0.1;
-  const rail=H.rb(railW,0.032,0.09,0.01,C.DARK); rail.position.set(0,canopyY+0.016,0); g.add(rail);
-
-  // Scale-out RDMA exit fiber (exits to external spine — DEEP)
-  const exitCurve=new T.QuadraticBezierCurve3(
-    new T.Vector3(swX[1],canopyY,0),
-    new T.Vector3(swX[1]+1.0,canopyY+0.5,-0.5),
-    new T.Vector3(swX[1]+1.8,canopyY+0.1,-1.0)
-  );
-  const exitTube=new T.TubeGeometry(exitCurve,8,0.018,4,false);
-  g.add(new T.Mesh(exitTube,H.k(C.DEEP)));
 };
 
 E.rack = (g,C,T,H) => {
@@ -97,8 +78,10 @@ E.rack = (g,C,T,H) => {
   // U-slot rails: METAL (more visible than GLINE)
   for(let u=0;u<9;u++){const r=H.bm(W,0.006,D,C.METAL);r.position.y=0.28+u*0.38;g.add(r);}
   // Blade slots: MAIN body, METAL front plate
+  // Drill-down highlight: blade body represents next level down
+  const hiBlade = C._ACTIVE ? mix(C.MAIN, C.STATUS, HI_RATIO) : C.MAIN;
   for(let b=0;b<6;b++){
-    const bl=H.rb(W-0.1,0.16,D-0.1,0.018,C.MAIN); bl.position.y=0.3+b*0.52; g.add(bl);
+    const bl=H.rb(W-0.1,0.16,D-0.1,0.018,hiBlade); bl.position.y=0.3+b*0.52; g.add(bl);
     const fp=H.bm(W-0.1,0.12,0.016,C.METAL); fp.position.set(0,0.3+b*0.52,D/2-0.008); g.add(fp);
     // Small LED on each blade front: STATUS + BRASS accent dot
     const ld=H.bl(0.14,0.014,0.014,C.STATUS); ld.position.set(-W*0.3,0.3+b*0.52,D/2+0.008); g.add(ld);
@@ -132,11 +115,13 @@ E.blade = (g,C,T,H) => {
   // Status LED strip
   const led=H.bl(W-0.5,0.028,0.02,C.STATUS); led.position.set(0,HT/2+0.015,D/2+0.095); g.add(led);
   // NPU heatspreaders: DEEP (slightly darker than MAIN body)
+  // Drill-down highlight: NPU/CPU on blade represent next level down
+  const hiChip = C._ACTIVE ? mix(C.DEEP, C.STATUS, HI_RATIO) : C.DEEP;
   const hsH=0.11;
   const hsTopY=HT/2+hsH+0.003;
   const finH=0.08;
   for(let n=0;n<8;n++){
-    const hs=H.rb(0.42,hsH,0.5,0.012,C.DEEP); hs.position.set(-1.75+n*0.5, HT/2+hsH/2+0.003, -0.15); g.add(hs);
+    const hs=H.rb(0.42,hsH,0.5,0.012,hiChip); hs.position.set(-1.75+n*0.5, HT/2+hsH/2+0.003, -0.15); g.add(hs);
     // Fins: LITE (bright aluminum fin tips)
     for(let f=0;f<3;f++){
       const fin=H.bm(0.04,finH,0.5,C.LITE);
@@ -144,10 +129,12 @@ E.blade = (g,C,T,H) => {
     }
   }
   // CPU on blade: METAL body, DEEP fins
+  const hiCpuBody = C._ACTIVE ? mix(C.METAL, C.STATUS, HI_RATIO) : C.METAL;
   const cpuH=0.14;
-  const cpu=H.rb(0.65,cpuH,0.65,0.018,C.METAL); cpu.position.set(0,HT/2+cpuH/2+0.003,D*0.3); g.add(cpu);
+  const cpu=H.rb(0.65,cpuH,0.65,0.018,hiCpuBody); cpu.position.set(0,HT/2+cpuH/2+0.003,D*0.3); g.add(cpu);
+  // CPU fins: LITE (same as NPU/NIC fins — unified heatsink language)
   for(let f=0;f<5;f++){
-    const fin=H.bm(0.65,cpuH+0.01,0.02,C.DEEP); fin.position.set(0,HT/2+cpuH/2+0.005,-D*0.14+f*0.06); g.add(fin);
+    const fin=H.bm(0.65,cpuH+0.01,0.02,C.LITE); fin.position.set(0,HT/2+cpuH/2+0.005,-D*0.14+f*0.06); g.add(fin);
   }
 };
 
@@ -177,7 +164,9 @@ E.npu = (g,C,T,H) => {
   // Left column: AIC (#E9E9E9) — lighter than die window but not as stark as center
   const lCol=H.rb(lw,pH,1.33,0.018,C.AIC); lCol.position.set(-0.645,pY,-0.105); g.add(lCol);
   // Center column: LITE (#F7F8F8) — dominant, brightest panel
-  const cCol=H.rb(cw,pH,1.54,0.020,C.LITE); cCol.position.set(0,pY,0); g.add(cCol);
+  // Drill-down highlight: center column = die window area, next level down
+  const hiCenter = C._ACTIVE ? mix(C.LITE, C.STATUS, HI_RATIO) : C.LITE;
+  const cCol=H.rb(cw,pH,1.54,0.020,hiCenter); cCol.position.set(0,pY,0); g.add(cCol);
   // Right column: AIC (mirror of left)
   const rCol=H.rb(lw,pH,1.33,0.018,C.AIC); rCol.position.set(0.645,pY,-0.105); g.add(rCol);
 
@@ -201,9 +190,27 @@ E.die = (g,C,T,H) => {
   [{dx:-0.14,di:0},{dx:0.14,di:1}].forEach(({dx,di})=>{
   // Die block: MAIN (#CCCDD0) — softer against DARK substrate, METAL grid contrast 93pts not 122
     const dm=H.rb(0.24,0.05,0.38,0.012,C.MAIN); dm.position.set(dx,0.025,0); g.add(dm);
-    // Grid lines on die: METAL
-    for(let gx=0;gx<5;gx++){const r=H.bl(0.22,0.002,0.005,C.METAL);r.position.set(dx,0.052,-0.14+gx*0.07);g.add(r);}
-    for(let gz=0;gz<3;gz++){const c=H.bl(0.005,0.002,0.36,C.METAL);c.position.set(dx-0.08+gz*0.08,0.052,0);g.add(c);}
+    // Die floorplan: 3×4 discrete functional unit blocks, clearly separated
+    const bW=0.058,bD=0.058,bH=0.010,bGap=0.014;
+    const bCols=3,bRows=4;
+    const totalW=bCols*bW+(bCols-1)*bGap;
+    const totalD=bRows*bD+(bRows-1)*bGap;
+    const startX=dx-totalW/2+bW/2;
+    const startZ=-totalD/2+bD/2;
+    const blockY=0.050+0.003+bH/2; // die top(0.05) + gap(0.003) + half height
+    // Die floorplan blocks: 4-level color zoning, ALL become STATUS when active (drill-down highlight)
+    const blockPalette=[
+      [C.LITE, C.AIC,  C.DEEP, C.MAIN],   // col 0: compute heavy
+      [C.AIC,  C.LITE, C.LITE, C.DEEP],   // col 1: cache + IO
+      [C.MAIN, C.DEEP, C.AIC,  C.LITE],   // col 2: control + PHY
+    ];
+    for(let col=0;col<bCols;col++){for(let row=0;row<bRows;row++){
+      const bx=startX+col*(bW+bGap);
+      const bz=startZ+row*(bD+bGap);
+      const bc=C._ACTIVE ? mix(blockPalette[col][row], C.STATUS, HI_RATIO) : blockPalette[col][row];
+      const blk=H.rb(bW,bH,bD,0.004,bc);
+      blk.position.set(bx,blockY,bz); g.add(blk);
+    }}
     // HBM on die side — 2-tier mini HBM Stack (same visual language)
     const hx=di===0?dx-0.22:dx+0.22;
     const tW0=0.09, tW1=0.102, tH=0.045, gapY=0.058;
@@ -232,8 +239,9 @@ E.hbm = (g,C,T,H) => {
   base.position.y=baseTopY-baseH/2; g.add(base);
   widths.forEach((w,i)=>{
     const cy=i*gap;
-    // Alternate MAIN/DEEP for adjacent tiers — actual visual separation
-    const tierCol = i%2===0 ? C.MAIN : C.DEEP;
+    // Alternate MAIN/DEEP for adjacent tiers — ALL become STATUS when active (drill-down highlight)
+    const tierBase = i%2===0 ? C.MAIN : C.DEEP;
+    const tierCol = C._ACTIVE ? mix(tierBase, C.STATUS, HI_RATIO) : tierBase;
     const hm=H.rb(w,tH,0.18,0.008,tierCol); hm.position.y=cy; g.add(hm);
     if(i<widths.length-1){
       const midGap=(cy+tH/2+(i+1)*gap-tH/2)/2;
@@ -255,9 +263,16 @@ E.aicore = (g,C,T,H) => {
   // AIC Cube zone: MAIN (#CCCDD0) — softer base reduces METAL grid contrast from 122→93 pts
   const aicW=W*0.58,aicD=D*0.82;
   const aic=H.rb(aicW,HT+0.05,aicD,0.035,C.MAIN); aic.position.set(-W*0.18,0,0.1); g.add(aic);
-  // AIC grid lines: METAL (strong contrast against AIC)
-  for(let gr=0;gr<6;gr++){const r=H.bl(aicW,0.022,0.022,C.METAL);r.position.set(-W*0.18,HT/2+0.04,-aicD*0.44+gr*aicD*0.18);g.add(r);}
-  for(let gc=0;gc<5;gc++){const c=H.bl(0.022,0.022,aicD,C.METAL);c.position.set(-W*0.46+gc*aicW*0.28,HT/2+0.04,0.1);g.add(c);}
+  // AIC Cube array: 5×4, ALL become STATUS when active (drill-down highlight into cube array)
+  const cubeW=(aicW-0.06)/5, cubeD=(aicD-0.06)/4, cubeH=0.038, cubeGap=0.012;
+  const cubeRowCols=[C.LITE, C.AIC, C.MAIN, C.DEEP]; // front=brightest, back=deepest
+  for(let col=0;col<5;col++){for(let row=0;row<4;row++){
+    const cx=-W*0.18 - aicW/2 + 0.03 + col*(cubeW+cubeGap) + cubeW/2;
+    const cz= 0.1    - aicD/2 + 0.03 + row*(cubeD+cubeGap) + cubeD/2;
+    const cc=C._ACTIVE ? mix(cubeRowCols[row], C.STATUS, HI_RATIO) : cubeRowCols[row];
+    const cb=H.rb(cubeW,cubeH,cubeD,0.006,cc);
+    cb.position.set(cx, HT/2+0.025+cubeH/2, cz); g.add(cb);
+  }}
   // AIC top edge accent: LITE strip
   const aicEdge=H.bl(aicW,0.006,0.006,C.LITE); aicEdge.position.set(-W*0.18,HT/2+0.056,aicD/2+0.003); g.add(aicEdge);
   // BRASS accent at AIC/AIV boundary
@@ -277,11 +292,13 @@ E.tile = (g,C,T,H) => {
   const W=0.1,HT=0.008,D=0.14;
   // Body: MAIN
   g.add(H.rb(W,HT,D,0.008,C.MAIN));
-  // Cells: STATUS(active) / DEEP(inactive non-lit) / METAL(structural)
+  // Cells: ALL become STATUS when active (drill-down highlight) / structural pattern in default
   for(let cr=0;cr<2;cr++){for(let cc=0;cc<4;cc++){
     const lit=(cr===0&&cc===1);
     const idle=(cc===0||cc===3); // corner cells slightly darker
-    const cell=H.bl(W*0.42,HT*0.55,D*0.22,lit?C.STATUS:idle?C.METAL:C.DEEP);
+    const cellBase = lit?C.STATUS:idle?C.METAL:C.DEEP;
+    const cellCol = C._ACTIVE ? mix(cellBase, C.STATUS, HI_RATIO) : cellBase;
+    const cell=H.bl(W*0.42,HT*0.55,D*0.22,cellCol);
     cell.position.set(-W*0.24+cr*W*0.48,HT*1.15,-D*0.38+cc*D*0.25); g.add(cell);
   }}
   const glow=H.bl(W*0.42,HT*0.4,D*0.22,C.STATUS); glow.position.set(-W*0.24,HT*0.9,0.04); g.add(glow);
@@ -299,8 +316,9 @@ E.ub_switch = (g,C,T,H) => {
   for(let p=0;p<20;p++){const pm=H.bl(0.11,0.11,0.018,p<3?C.STATUS:C.DEEP);pm.position.set(-3.2+p*0.335,0,D/2+0.016);g.add(pm);}
   // LPO fiber module bodies: DARK (deep port openings)
   const lmH=0.07;
+  const hiLpo = C._ACTIVE ? mix(C.DARK, C.STATUS, HI_RATIO) : C.DARK;
   for(let l=0;l<6;l++){
-    const lm=H.rb(0.12,lmH,0.26,0.012,C.DARK); lm.position.set(-2.5+l*0.98,HT/2+lmH/2+0.003,0); g.add(lm);
+    const lm=H.rb(0.12,lmH,0.26,0.012,hiLpo); lm.position.set(-2.5+l*0.98,HT/2+lmH/2+0.003,0); g.add(lm);
     // Fiber tails: DEEP
     const ft=H.bl(0.012,0.012,0.2,C.DEEP); ft.position.set(-2.5+l*0.98,HT/2+lmH+0.006,-0.22); g.add(ft);
   }
@@ -324,8 +342,10 @@ E.cpu = (g,C,T,H) => {
   const ihs=H.rb(IW,IH,ID,0.022,C.LITE);
   ihs.position.y=ihsY; g.add(ihs);
   // IHS inner recessed panel: MAIN
+  // Drill-down highlight: inner panel = die area, next level down
+  const hiInner = C._ACTIVE ? mix(C.MAIN, C.STATUS, HI_RATIO) : C.MAIN;
   const inW=IW*0.80, inH=IH*0.45, inD=ID*0.80;
-  const inner=H.bm(inW,inH,inD,C.MAIN);
+  const inner=H.bm(inW,inH,inD,hiInner);
   inner.position.y=ihsY+IH/2-inH/2+0.001; g.add(inner);
   // Edge highlight strip: LITE
   const eh=H.bl(IW-0.02,0.003,ID-0.02,C.LITE);
@@ -341,8 +361,9 @@ E.cpu = (g,C,T,H) => {
 };
 
 E.lpo = (g,C,T,H) => {
-  // Module body: METAL
-  g.add(H.rb(0.16,0.09,0.4,0.015,C.METAL));
+  // Module body: METAL — drill-down highlight target
+  const hiBody = C._ACTIVE ? mix(C.METAL, C.STATUS, HI_RATIO) : C.METAL;
+  g.add(H.rb(0.16,0.09,0.4,0.015,hiBody));
   // Cage end: DEEP
   const cage=H.rb(0.16,0.1,0.065,0.01,C.DEEP); cage.position.z=0.24; g.add(cage);
   // Port apertures: DARK
@@ -357,14 +378,15 @@ E.lpo = (g,C,T,H) => {
 };
 
 E.nic = (g,C,T,H) => {
-  // PCB: MAIN
-  g.add(H.rb(1.85,0.1,1.12,0.02,C.MAIN));
-  // ASIC block: METAL (dark heat spreader)
-  const asic=H.rb(0.62,0.13,0.62,0.018,C.METAL); asic.position.set(-0.2,0.120,0); g.add(asic);
-  // ASIC fins: LITE — protrude ABOVE asic top (0.185), center at 0.185+finH/2+0.004
-  const finH=0.10;
-  const finY=0.185+finH/2+0.004; // = 0.239, clearly above ASIC
-  for(let f=0;f<4;f++){const fin=H.bm(0.60,finH,0.030,C.LITE);fin.position.set(-0.2,finY,-0.22+f*0.15);g.add(fin);}
+  // PCB: DARK (same substrate language as NPU/CPU)
+  g.add(H.rb(1.85,0.1,1.12,0.02,C.DARK));
+  // ASIC block: METAL (dark heat spreader) — drill-down highlight target
+  const hiAsic = C._ACTIVE ? mix(C.METAL, C.STATUS, HI_RATIO) : C.METAL;
+  const asic=H.rb(0.62,0.13,0.62,0.018,hiAsic); asic.position.set(-0.2,0.120,0); g.add(asic);
+  // ASIC fins: lower profile, tighter pitch — realistic NIC heatsink
+  const finH=0.055;
+  const finY=0.185+finH/2+0.004;
+  for(let f=0;f<5;f++){const fin=H.bm(0.58,finH,0.022,C.LITE);fin.position.set(-0.2,finY,-0.20+f*0.10);g.add(fin);}
   // Network ports: METAL cages, DARK holes
   for(let p=0;p<2;p++){
     const port=H.rb(0.19,0.21,0.065,0.015,C.METAL); port.position.set(-0.34+p*0.68,0.160,-0.58); g.add(port);
@@ -388,14 +410,14 @@ E.port = (g,C,T,H) => {
   const panel=H.rb(BW, BH-0.012, panelD, 0.010, C.DEEP);
   panel.position.z = panelZ; g.add(panel);
 
-  // UB port cages: w=0.10, spacing=0.135
-  // x = -0.27, -0.135, 0.00, +0.135  →  rightmost right edge = 0.185
+  // UB port cages: w=0.10, spacing=0.135 — drill-down highlight target
+  const hiCage = C._ACTIVE ? mix(C.METAL, C.STATUS, HI_RATIO) : C.METAL;
   const cageD=0.048, cageW=0.10, cageH=0.11;
   const cageCZ = panelFrontZ + 0.006 + cageD/2;   // 0.232
   const cageFZ = cageCZ + cageD/2;                 // 0.256
   const ubXs = [-0.27,-0.135,0.00,0.135];
   ubXs.forEach((cx,p)=>{
-    const ub=H.rb(cageW,cageH,cageD,0.009,C.METAL);
+    const ub=H.rb(cageW,cageH,cageD,0.009,hiCage);
     ub.position.set(cx,0,cageCZ); g.add(ub);
     const uh=H.bl(0.048,0.012,0.009, p===0?C.STATUS:C.DARK);
     uh.position.set(cx,0.034,cageFZ+0.007); g.add(uh);
