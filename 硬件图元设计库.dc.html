@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/semantic.css">
   <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/components.css">
   <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/css/style.css">
-  <script src="entity-builders.js?v=206"></script>
+  <script src="entity-builders.js?v=220"></script>
   <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}html,body{width:100%;height:100vh;overflow:hidden;}</style>
 </helmet>
 
@@ -328,6 +328,10 @@ class Component extends DCLogic {
       const rg=new T.Group(); rg.rotation.y=d.r||0; if(d.rx) rg.rotation.x=d.rx; sc.add(rg);
       try{ const fn=window.HWENT&&window.HWENT[d.id]; if(fn) fn(rg,C,T,hb); }
       catch(e){ console.warn('[HW3D]',d.id,e.message); }
+
+      // Status is expressed through the model's own LED elements (C.STATUS color)
+      // No external indicators — status reads through integrated LED strips/columns
+
       const cam=new T.PerspectiveCamera(42,1,.001,200);
       cam.position.set(d.c[0],d.c[1],d.c[2]); cam.lookAt(d.k[0],d.k[1],d.k[2]);
       this._cells.push({sc,cam,rg});
