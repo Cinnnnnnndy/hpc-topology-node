@@ -17,6 +17,37 @@
 | `昇腾超节点3D拓扑.dc.html` | 全层级同屏 3D 拓扑视图 |
 | `pattern.json` | 设计模式规范（图元 ID、层级关系、颜色体系） |
 | `uxspec.md` | UX 规格文档（交互规则、状态定义、层级说明） |
+| `index.html` | GitHub Pages 落地页（4 个组件入口） |
+| `support.js` | DC → React 运行时（使 `.dc.html` 可独立/静态托管渲染） |
+| `_ds/…` | PTO 设计系统 CSS 变量（独立托管回退） |
+| `vendor/…` | 本地内置的 React / ReactDOM / Three.js（免 CDN） |
+| `.github/workflows/pages.yml` | GitHub Pages 自动部署工作流 |
+
+---
+
+## 在线预览（GitHub Pages）
+
+本仓库已配置为可在 GitHub Pages 直接托管预览。
+
+- 打开 `index.html` 即可进入落地页，链接到 4 个组件。
+- 部署由 `.github/workflows/pages.yml` 在推送到 `main` 时自动完成
+  （首次部署会自动开启 Pages，无需手动在 Settings 里配置来源）。
+- 站点地址：`https://cinnnnnnndy.github.io/hpc-topology-node/`
+
+### 为什么需要 support.js
+
+这些 `.dc.html` 是 **DC 设计平台的导出文件**，原本依赖平台运行时
+（`<x-dc>` 模板引擎、`DCLogic` 基类、`{{ }}` / `<sc-for>` / `<sc-if>` / `<helmet>` 指令），
+该运行时不随导出一起提供，因此在纯静态托管上无法渲染。
+
+`support.js` 用 React 重新实现了这套运行时的最小子集：`DCLogic` 几乎 1:1 对应
+`React.Component`（`state` / `setState` / `forceUpdate` / `componentDidMount` /
+`componentDidUpdate(pp,ps)` / `componentWillUnmount` / `renderVals()`），模板中仅用到
+内联 `style`、`onClick`、`id` 以及上述指令与 `{{ 表达式 }}` 插值。React / ReactDOM / Three.js
+本地内置于 `vendor/`，站点自包含、免外部 CDN。`.nojekyll` 确保 `_ds/`、`vendor/`
+等下划线目录不被 Pages 的 Jekyll 过滤。
+
+> 注：GitHub 上的合并不会自动同步回原 DC 设计平台；如需在该平台预览，仍需在平台侧重新导入。
 
 ---
 

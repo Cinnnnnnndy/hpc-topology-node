@@ -1,0 +1,5 @@
+/*
+ * PTO Design System — component tokens (standalone fallback).
+ * Component-level tokens are folded into foundation.css for this standalone
+ * build; kept so the component <link> references resolve without 404s.
+ */

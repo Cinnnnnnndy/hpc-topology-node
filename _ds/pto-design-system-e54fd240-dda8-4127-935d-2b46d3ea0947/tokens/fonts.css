@@ -1,0 +1,6 @@
+/*
+ * PTO Design System — font tokens (standalone fallback).
+ * Loads the mono/sans families referenced by --font-mono. Falls back to system
+ * fonts if the network font is unavailable (e.g. offline hosting).
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
