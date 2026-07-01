@@ -1,7 +1,7 @@
 # 昇腾超节点 3D 拓扑设计库
 
 > 导出时间：2026-07-01
-> 版本：v2.1（状态下钻高亮 + Die/AI Core 功能块重构 + 合并图元库 + NIC/散热语言统一）
+> 版本：v2.2（2D 图标状态淡着色 + 层级连线样式探索文档）
 
 ---
 
@@ -15,9 +15,11 @@
 | `硬件图元图标库.dc.html` | 2D 图标库（13图元 × 6状态网格） |
 | `硬件图元库.dc.html` | 3D + 2D 合并图元库（Tab 切换，状态下钻高亮） |
 | `昇腾超节点3D拓扑.dc.html` | 全层级同屏 3D 拓扑视图 |
+| `层级连线样式探索.dc.html` | 连线样式设计探索文档（6 轮迭代，2D/3D 均含） |
 | `pattern.json` | 设计模式规范（图元 ID、层级关系、颜色体系） |
 | `uxspec.md` | UX 规格文档（交互规则、状态定义、层级说明） |
-| `index.html` | GitHub Pages 落地页（4 个组件入口） |
+| `CHANGELOG.md` | 增量更新记录 |
+| `index.html` | GitHub Pages 落地页（5 个组件入口） |
 | `support.js` | DC → React 运行时（使 `.dc.html` 可独立/静态托管渲染） |
 | `_ds/…` | PTO 设计系统 CSS 变量（独立托管回退） |
 | `vendor/…` | 本地内置的 React / ReactDOM / Three.js（免 CDN） |
@@ -29,7 +31,7 @@
 
 本仓库已配置为可在 GitHub Pages 直接托管预览。
 
-- 打开 `index.html` 即可进入落地页，链接到 4 个组件。
+- 打开 `index.html` 即可进入落地页，链接到全部 5 个组件。
 - 部署由 `.github/workflows/pages.yml` 在推送到 `main` 时自动完成
   （首次部署会自动开启 Pages，无需手动在 Settings 里配置来源）。
 - 站点地址：`https://cinnnnnnndy.github.io/hpc-topology-node/`
