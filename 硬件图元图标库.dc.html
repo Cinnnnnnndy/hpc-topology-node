@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/foundation.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/semantic.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/tokens/components.css">
+  <link rel="stylesheet" href="_ds/pto-design-system-e54fd240-dda8-4127-935d-2b46d3ea0947/css/style.css">
+  <script src="icon-defs.js"></script>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}html,body{width:100%;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}</style>
+</helmet>
+
+<div style="width:100%;height:100vh;display:flex;flex-direction:column;background:var(--background);color:var(--foreground);">
+
+  <!-- Toolbar -->
+  <div style="height:var(--comp-toolbar-height);flex-shrink:0;display:flex;align-items:center;padding:0 var(--space-4);background:var(--background);border-bottom:1px solid var(--border-subtle);">
+    <div style="display:flex;align-items:center;gap:var(--space-2);padding-right:var(--space-4);border-right:1px solid var(--border-subtle);margin-right:var(--space-4);">
+      <div style="width:7px;height:7px;border-radius:50%;background:var(--foreground-secondary);"></div>
+      <span style="font-size:var(--font-size-title-sm);font-weight:var(--font-weight-semibold);">PTO</span>
+      <span style="color:var(--foreground-muted);">·</span>
+      <span style="font-family:var(--font-mono);font-size:var(--font-size-body-sm);color:var(--foreground-muted);">硬件图元图标库 · 2D Icon States</span>
+    </div>
+    <span style="font-size:var(--font-size-body-sm);color:var(--foreground-muted);">13 图元 × 6 状态 · 点击行查看详情</span>
+    <div style="flex:1;"></div>
+    <button onClick="{{ onThemeToggle }}" style="font-family:var(--font-mono);font-size:var(--font-size-label-xs);padding:3px 10px;border-radius:6px;border:1px solid var(--border-default);background:transparent;color:var(--foreground-muted);cursor:pointer;margin-right:var(--space-3);">{{ themeBtnLabel }}</button>
+    <span style="font-family:var(--font-mono);font-size:var(--font-size-label-xs);color:var(--foreground-disabled);">#CCCDD0 · #C4C4C4 · #F7F8F8 · PTO accent</span>
+  </div>
+
+  <!-- Main -->
+  <div style="flex:1;display:flex;overflow:hidden;">
+
+    <!-- Scrollable icon grid -->
+    <div style="flex:1;overflow:auto;">
+      <!-- Column headers -->
+      <div style="display:flex;align-items:center;height:36px;border-bottom:1px solid var(--border-subtle);background:var(--background);position:sticky;top:0;z-index:5;">
+        <div style="width:152px;flex-shrink:0;padding:0 var(--space-3);font-size:var(--font-size-label-xs);font-weight:var(--font-weight-semibold);letter-spacing:.5px;text-transform:uppercase;color:var(--foreground-muted);">ENTITY</div>
+        <sc-for list="{{ stateHeaders }}" as="sh" hint-placeholder-count="6">
+          <div style="width:92px;flex-shrink:0;padding:0 var(--space-2);font-family:var(--font-mono);font-size:var(--font-size-label-xs);color:{{ sh.color }};text-align:center;">{{ sh.label }}</div>
+        </sc-for>
+      </div>
+
+      <!-- Entity rows -->
+      <sc-for list="{{ entities }}" as="ent" hint-placeholder-count="13">
+        <div onClick="{{ ent.onSelect }}" style="display:flex;align-items:center;border-bottom:1px solid var(--border-subtle);cursor:pointer;background:{{ ent.rowBg }};transition:background var(--duration-fast);">
+          <!-- Entity name cell -->
+          <div style="width:152px;flex-shrink:0;padding:var(--space-3);display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div style="width:4px;height:4px;border-radius:50%;background:{{ ent.lc }};flex-shrink:0;"></div>
+              <span style="font-family:var(--font-mono);font-size:var(--font-size-label-xs);color:{{ ent.lc }};text-transform:uppercase;letter-spacing:.4px;">{{ ent.lv }}</span>
+            </div>
+            <div style="font-size:var(--font-size-body-sm);font-weight:var(--font-weight-semibold);color:var(--foreground);line-height:1.2;">{{ ent.label }}</div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--foreground-disabled);">{{ ent.ln }}</div>
+          </div>
+
+          <!-- 6 state icon cells -->
+          <sc-for list="{{ ent.cells }}" as="cell" hint-placeholder-count="6">
+            <div style="width:92px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:var(--space-2) var(--space-1);gap:4px;border-left:1px solid var(--border-subtle);background:{{ cell.bg }};outline:{{ cell.outline }};outline-offset:-1px;transition:background var(--duration-fast);">
+              <div style="width:56px;height:42px;display:flex;align-items:center;justify-content:center;">
+                {{ cell.icon }}
+              </div>
+              <div style="font-family:var(--font-mono);font-size:9px;color:{{ cell.labelColor }};text-align:center;line-height:1.2;">{{ cell.stateLabel }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Inspector panel -->
+    <div style="width:232px;flex-shrink:0;border-left:1px solid var(--border-subtle);display:flex;flex-direction:column;background:var(--background);overflow:hidden;">
+      <div style="padding:var(--space-4);border-bottom:1px solid var(--border-subtle);">
+        <div style="font-size:var(--font-size-label-xs);font-weight:var(--font-weight-semibold);letter-spacing:.6px;color:var(--foreground-muted);text-transform:uppercase;margin-bottom:var(--space-3);">SELECTED</div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);">
+          <div style="width:5px;height:5px;border-radius:50%;background:{{ inspLc }};flex-shrink:0;"></div>
+          <span style="font-family:var(--font-mono);font-size:var(--font-size-label-xs);color:{{ inspLc }};text-transform:uppercase;letter-spacing:.4px;">{{ inspLv }}</span>
+        </div>
+        <div style="font-size:16px;font-weight:var(--font-weight-semibold);color:var(--foreground);margin-bottom:2px;">{{ inspLabel }}</div>
+        <div style="font-family:var(--font-mono);font-size:var(--font-size-label-xs);color:var(--foreground-muted);">{{ inspLn }}</div>
+      </div>
+
+      <!-- Large icon preview -->
+      <div style="padding:var(--space-5);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border-subtle);">
+        <div style="width:120px;height:90px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.03);border:1px solid var(--border-subtle);border-radius:8px;">
+          {{ inspIconLg }}
+        </div>
+      </div>
+
+      <!-- State swatches -->
+      <div style="padding:var(--space-4);">
+        <div style="font-size:var(--font-size-label-xs);font-weight:var(--font-weight-semibold);letter-spacing:.6px;color:var(--foreground-muted);text-transform:uppercase;margin-bottom:var(--space-3);">STATUS VARIANTS</div>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+          <sc-for list="{{ inspStatusCells }}" as="sc2" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+              <div style="width:40px;height:30px;border:1px solid var(--border-subtle);border-radius:4px;overflow:hidden;background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:center;">
+                {{ sc2.icon }}
+              </div>
+              <span style="font-family:var(--font-mono);font-size:9px;color:{{ sc2.color }};">{{ sc2.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:var(--space-3) var(--space-4);border-top:1px solid var(--border-subtle);margin-top:auto;">
+        <div style="font-family:var(--font-mono);font-size:var(--font-size-label-xs);color:var(--foreground-disabled);line-height:1.6;">48×36 viewBox · SVG<br>状态色仅用 LED 条指示</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:720}}">
+class Component extends DCLogic {
+  state = { selId: 'superpod', theme: 'light' };
+
+  _DEFS = [
+    {id:'superpod',label:'SuperPoD',ln:'Super Node',lv:'L7',lc:'#7C8DB8'},
+    {id:'rack',label:'机柜 Rack',ln:'Server Rack',lv:'L6',lc:'#78797d'},
+    {id:'blade',label:'刀片 Blade',ln:'Compute Node',lv:'L5',lc:'#78797d'},
+    {id:'npu',label:'NPU / rank',ln:'Ascend 950',lv:'L4',lc:'#4369EF'},
+    {id:'die',label:'Die + HBM',ln:'Die on Substrate',lv:'L3',lc:'#FFAA3B'},
+    {id:'hbm',label:'HBM Stack',ln:'Hi-BW Memory',lv:'HBM',lc:'#7C8DB8'},
+    {id:'aicore',label:'AI Core',ln:'DaVinci Core',lv:'L2',lc:'#04D793'},
+    {id:'tile',label:'Tile',ln:'Compute Tile',lv:'L1',lc:'#04D793'},
+    {id:'ub_switch',label:'UB Switch',ln:'UB Spine/L2',lv:'交换',lc:'#4369EF'},
+    {id:'cpu',label:'CPU 鲲鹏',ln:'Kunpeng 920',lv:'CPU',lc:'#78797d'},
+    {id:'lpo',label:'LPO 800G',ln:'Optical Module',lv:'光模块',lc:'#7C8DB8'},
+    {id:'nic',label:'NIC 擎天',ln:'Qingtian NIC',lv:'NIC',lc:'#78797d'},
+    {id:'port',label:'端口 Port',ln:'UB + RDMA',lv:'端口',lc:'#FFAA3B'},
+  ];
+
+  _STATES = [
+    {key:'def',  label:'默认',  bg:'transparent',              outline:'none',                        labelColor:'var(--foreground-disabled)', led:null},
+    {key:'hov',  label:'Hover', bg:'rgba(120,121,125,0.09)',   outline:'1px solid rgba(120,121,125,.3)', labelColor:'var(--foreground-muted)',    led:null},
+    {key:'sel',  label:'选中',  bg:'rgba(67,105,239,0.10)',    outline:'1px solid #4369EF',           labelColor:'#7c9ef8',                   led:null},
+    {key:'idle', label:'空闲',  bg:'transparent',              outline:'none',                        labelColor:'#04D793',                   led:'#04D793'},
+    {key:'warn', label:'告警',  bg:'transparent',              outline:'none',                        labelColor:'#FFAA3B',                   led:'#FFAA3B'},
+    {key:'busy', label:'繁忙',  bg:'transparent',              outline:'none',                        labelColor:'#FF4B7B',                   led:'#FF4B7B'},
+  ];
+
+  componentDidMount(){
+    document.documentElement.setAttribute('data-theme','light');
+  }
+  componentDidUpdate(pp,ps){
+    if(ps&&ps.theme!==this.state.theme)
+      document.documentElement.setAttribute('data-theme',this.state.theme==='dark'?'':'light');
+  }
+  renderVals(){
+    const B = window.HWICONS && window.HWICONS.build;
+    if(!B) return {entities:[],stateHeaders:[],inspLabel:'—',inspLn:'',inspLv:'',inspLc:'#78797d',inspIconLg:null,inspStatusCells:[],themeBtnLabel:'◑ 深色',onThemeToggle:()=>{}};
+    const selId = this.state.selId;
+    const lightMode = this.state.theme === 'light';
+    const stateHeaders = this._STATES.map(st=>({
+      label: st.label,
+      color: st.key==='idle'?'#04D793':st.key==='warn'?'#FFAA3B':st.key==='busy'?'#FF4B7B':st.key==='sel'?'#7c9ef8':'var(--foreground-muted)',
+    }));
+    const entities = this._DEFS.map(d=>({
+      ...d,
+      rowBg: d.id===selId?'rgba(67,105,239,.05)':'transparent',
+      onSelect: ()=>this.setState({selId:d.id}),
+      cells: this._STATES.map(st=>({
+        stateLabel: st.label,
+        bg: st.bg, outline: st.outline, labelColor: st.labelColor,
+        icon: B(d.id, st.led, React, lightMode),
+      })),
+    }));
+    const selDef = this._DEFS.find(d=>d.id===selId)||this._DEFS[0];
+    const inspStatusCells = [
+      {label:'空闲',  color:'#04D793', icon:B(selDef.id,'#04D793',React,lightMode)},
+      {label:'告警',  color:'#FFAA3B', icon:B(selDef.id,'#FFAA3B',React,lightMode)},
+      {label:'繁忙',  color:'#FF4B7B', icon:B(selDef.id,'#FF4B7B',React,lightMode)},
+      {label:'离线',  color:'#5A6172', icon:B(selDef.id,'#5A6172',React,lightMode)},
+    ];
+    const th=this.state.theme;
+    return {
+      stateHeaders, entities,
+      inspLabel: selDef.label, inspLn: selDef.ln,
+      inspLv: selDef.lv, inspLc: selDef.lc,
+      inspIconLg: B(selDef.id, null, React, lightMode),
+      inspStatusCells,
+      themeBtnLabel: th==='dark'?'☀ 浅色':'◑ 深色',
+      onThemeToggle: ()=>this.setState({theme:th==='dark'?'light':'dark'}),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

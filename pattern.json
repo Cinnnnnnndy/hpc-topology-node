@@ -1,0 +1,205 @@
+{
+  "id": "hardware-entity-icons",
+  "version": "1.0.0",
+  "name": "Hardware Entity Icons",
+  "nameCN": "昇腾硬件图元图标库",
+  "description": "2D SVG icon set + 3D isometric reference library for Ascend NPU hardware entities. 13 entities spanning L1–L7 hierarchy, with 6 interaction states and light/dark themes.",
+  "owner": "PTO Design System",
+  "category": "hardware-visualization",
+  "tags": ["ascend", "npu", "hardware", "icons", "isometric", "3d"],
+
+  "files": {
+    "iconBuilder": "icon-defs.js",
+    "entityBuilder3D": "entity-builders.js",
+    "iconLibraryDC": "硬件图元图标库.dc.html",
+    "entityLibraryDC": "硬件图元设计库.dc.html"
+  },
+
+  "api": {
+    "iconBuilder": {
+      "global": "window.HWICONS",
+      "method": "HWICONS.build(id, led, ReactInstance, lightMode)",
+      "params": {
+        "id": "string — entity id from entities list",
+        "led": "string | null — null=default; '#04D793'=idle; '#FFAA3B'=warn; '#FF4B7B'=busy; '#5A6172'=offline",
+        "ReactInstance": "React — pass window.React or imported React",
+        "lightMode": "boolean — true=light palette, false=dark palette"
+      },
+      "returns": "React SVG element, viewBox 48×36"
+    }
+  },
+
+  "entities": [
+    {
+      "id": "superpod",
+      "labelCN": "SuperPoD",
+      "labelEN": "Super Node",
+      "level": "L7",
+      "accentColor": "#7C8DB8",
+      "description": "超节点：机柜阵列 + 两层 UB 交换（柜内 L2 + 跨柜 Spine），nD-FullMesh any-to-any。",
+      "features": ["机柜阵列 + 顶部交换桥架", "两层 UB 交换", "nD-FullMesh"]
+    },
+    {
+      "id": "rack",
+      "labelCN": "机柜 Rack",
+      "labelEN": "Server Rack",
+      "level": "L6",
+      "accentColor": "#78797d",
+      "description": "物理机柜，高立式，容纳多块刀片 + 柜级 UB L2 交换。",
+      "features": ["开放式四柱框架", "L2 UB 交换在柜顶", "侧边 LED 光柱"]
+    },
+    {
+      "id": "blade",
+      "labelCN": "刀片 Blade",
+      "labelEN": "Compute Node",
+      "level": "L5",
+      "accentColor": "#78797d",
+      "description": "横插式计算节点：1 鲲鹏 CPU + 8 NPU，节点内经 L1 UB 交换互联。",
+      "features": ["扁平横向托盘", "前面板双把手 + LED 条", "顶面 NPU 散热鳍片块"]
+    },
+    {
+      "id": "npu",
+      "labelCN": "NPU / rank",
+      "labelEN": "Ascend 950 Package",
+      "level": "L4",
+      "accentColor": "#4369EF",
+      "description": "参考昇腾 950/910：正方形封装 + IHS 银灰金属框 + die 功能块窗口 + BGA 背面基板。",
+      "features": ["正方形 IHS 金属框（银灰）", "2×3 die 功能块布局", "BGA 背板可见", "底边金手指连接器"]
+    },
+    {
+      "id": "die",
+      "labelCN": "Die + HBM",
+      "labelEN": "Die Pair on Substrate",
+      "level": "L3",
+      "accentColor": "#FFAA3B",
+      "description": "计算晶粒：AI Core 阵列 + NoC + HBM，die 间 D2D 784 GB/s。",
+      "features": ["封装基板上 1~2 个方形 die", "细格纹 AI Core 阵列", "HBM 横向堆叠条", "D2D 粗连"]
+    },
+    {
+      "id": "hbm",
+      "labelCN": "HBM Stack",
+      "labelEN": "High-Bandwidth Memory",
+      "level": "HBM",
+      "accentColor": "#7C8DB8",
+      "description": "高带宽存储，紧邻 die 的横向堆叠薄块（3~4 层），每层渐宽，层间互连 bump。",
+      "features": ["3~4 层横向堆叠薄块", "每层渐宽", "层间互连 bump"]
+    },
+    {
+      "id": "aicore",
+      "labelCN": "AI Core",
+      "labelEN": "DaVinci AI Core",
+      "level": "L2",
+      "accentColor": "#04D793",
+      "description": "达芬奇架构：AIC Cube（密矩阵大块）+ AIV Vector（竖条纹中块）+ Scalar（小块）。",
+      "features": ["AIC Cube=浅灰大块（密格纹）", "AIV Vector=中灰竖条纹", "Scalar=深灰小块"]
+    },
+    {
+      "id": "tile",
+      "labelCN": "Tile",
+      "labelEN": "Compute Tile / SIMT Lane",
+      "level": "L1",
+      "accentColor": "#04D793",
+      "description": "最细计算粒度：Cube/Vector 的一个 tile / SIMT lane，网格中点亮一格表示当前激活。",
+      "features": ["4×2 计算格网格", "激活格高亮（状态色）", "其余格中性灰"]
+    },
+    {
+      "id": "ub_switch",
+      "labelCN": "UB Switch",
+      "labelEN": "UB Spine / L2 Switch",
+      "level": "交换",
+      "accentColor": "#4369EF",
+      "description": "交换板：满配端口面板 + LPO 800G 光模块笼，构成 UB-Mesh 骨干。",
+      "features": ["横置交换板", "前面板端口/光笼一排", "LPO 光纤尾纤"]
+    },
+    {
+      "id": "cpu",
+      "labelCN": "CPU 鲲鹏",
+      "labelEN": "Kunpeng 920 + LGA Socket",
+      "level": "CPU",
+      "accentColor": "#78797d",
+      "description": "鲲鹏 920：深色 LGA 保留框 + 银灰薄 IHS 面板，四角安装螺丝，无散热鳍片。",
+      "features": ["深色金属保留框（retention bracket）", "IHS 银灰薄面板从框内抬出", "四角安装螺丝"]
+    },
+    {
+      "id": "lpo",
+      "labelCN": "LPO 800G",
+      "labelEN": "LPO Optical Module",
+      "level": "光模块",
+      "accentColor": "#7C8DB8",
+      "description": "可插拔光模块（QSFP-DD / OSFP MSA 规格）+ 光纤尾纤，去 DSP，时延 <3ns。",
+      "features": ["小长方收发模块（MSA R~1mm）", "光纤辫尾纤", "接在卡/交换端口"]
+    },
+    {
+      "id": "nic",
+      "labelCN": "NIC 擎天",
+      "labelEN": "Qingtian NIC",
+      "level": "NIC",
+      "accentColor": "#78797d",
+      "description": "网卡：小板 + 1~2 个网口，走 VPC 平面（南北向）。",
+      "features": ["小板卡 + 1~2 个网口", "明显比 NPU 卡小", "走 VPC 平面"]
+    },
+    {
+      "id": "port",
+      "labelCN": "端口 Port",
+      "labelEN": "UB + RDMA Ports",
+      "level": "端口",
+      "accentColor": "#FFAA3B",
+      "description": "卡/交换面板连接器笼。UB 口密排（Scale-up 东西向），RDMA 口独立（Scale-out 南北向）。",
+      "features": ["UB 口：密排深灰（Scale-up）", "RDMA 口：独立深色（Scale-out）"]
+    }
+  ],
+
+  "states": [
+    { "key": "default",  "labelCN": "默认",  "ledColor": null,      "description": "默认静止态，无状态色" },
+    { "key": "hover",    "labelCN": "悬停",  "ledColor": null,      "description": "鼠标悬停，背景浅蓝叠加" },
+    { "key": "selected", "labelCN": "选中",  "ledColor": null,      "description": "选中态，蓝色边框 + 背景叠加" },
+    { "key": "idle",     "labelCN": "空闲",  "ledColor": "#04D793", "description": "正常运行 / 空闲，绿色 LED" },
+    { "key": "warn",     "labelCN": "告警",  "ledColor": "#FFAA3B", "description": "存在告警，橙色 LED" },
+    { "key": "busy",     "labelCN": "繁忙",  "ledColor": "#FF4B7B", "description": "高负载 / 故障，红色 LED" },
+    { "key": "offline",  "labelCN": "离线",  "ledColor": "#5A6172", "description": "离线 / 不可达，灰色 LED" }
+  ],
+
+  "colorSystem": {
+    "dark": {
+      "main":  "#535151",
+      "deep":  "#5a5a5a",
+      "lite":  "#78797d",
+      "bg":    "#313232",
+      "edge":  "#181818"
+    },
+    "light": {
+      "main":  "#CCCDD0",
+      "deep":  "#C4C4C4",
+      "lite":  "#F7F8F8",
+      "bg":    "#F0F1F1",
+      "edge":  "#A0A0A0",
+      "accent":"#E9E9E9",
+      "metal": "#6F7072",
+      "dark":  "#3D3D3D"
+    },
+    "semantic": {
+      "idle":    "#04D793",
+      "warn":    "#FFAA3B",
+      "busy":    "#FF4B7B",
+      "offline": "#5A6172",
+      "select":  "#4369EF"
+    },
+    "principle": "所有默认态使用灰色层次区分结构，无色相语义。状态色（LED参数）仅在表达运行时状态时使用。"
+  },
+
+  "iconSpec": {
+    "viewBox": "0 0 48 36",
+    "format": "SVG (React element via HWICONS.build)",
+    "renderSize": ["24×18", "32×24", "48×36", "64×48"],
+    "statusIndicator": "集成在图标体内部（非独立底部色条），随形状变色",
+    "cornerRadius": "0.5–3.5（与真实硬件倒角对应）"
+  },
+
+  "designPrinciples": [
+    "形状即类型：图元轮廓直接对应真实硬件形态（刀片扁、机柜高、CPU方形IHS+bracket）",
+    "灰度即结构：默认态全灰，无色相差异，状态色仅表达运行状态",
+    "状态集成：LED / 状态色嵌入图标体（不独立浮于图标外）",
+    "双主题：浅色（F7F8F8/CCCDD0/C4C4C4）和深色（78797d/535151/5a5a5a）完整支持",
+    "比例参考：IHS 厚度 ~2mm、QSFP 倒角 ~1mm 等真实规格映射到 SVG 坐标"
+  ]
+}

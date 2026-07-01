@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width:100%; height:100vh; background:#0d0d0d; overflow:hidden; font-family:'Inter','Source Han Sans SC','PingFang SC',sans-serif; -webkit-font-smoothing:antialiased; }
+  </style>
+</helmet>
+
+<div style="width:100%;height:100vh;display:flex;flex-direction:column;background:#0d0d0d;color:rgba(255,255,255,.9);">
+
+  <!-- Toolbar -->
+  <div style="height:44px;flex-shrink:0;display:flex;align-items:center;padding:0 14px;gap:0;background:rgba(8,8,8,.97);border-bottom:1px solid rgba(255,255,255,.06);z-index:20;">
+    <div style="display:flex;align-items:center;gap:7px;padding-right:14px;border-right:1px solid rgba(255,255,255,.06);margin-right:14px;">
+      <div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.85);"></div>
+      <span style="font-size:13px;font-weight:600;">PTO</span>
+      <span style="font-size:11px;color:rgba(255,255,255,.3);">·</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);">昇腾超节点 · 3D 全层级拓扑</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;margin-right:14px;">
+      <span style="font-size:9px;font-weight:600;letter-spacing:.6px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-right:3px;">PHASE</span>
+      <sc-for list="{{ phases }}" as="ph">
+        <button onClick="{{ ph.onClick }}" style="height:26px;padding:0 10px;border-radius:6px;border:1px solid {{ ph.border }};background:{{ ph.bg }};color:{{ ph.fg }};font:500 11px/1 'Inter',sans-serif;cursor:pointer;transition:all .12s;white-space:nowrap;">{{ ph.label }}</button>
+      </sc-for>
+    </div>
+    <div style="width:1px;height:18px;background:rgba(255,255,255,.07);margin:0 10px;"></div>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <span style="font-size:9px;font-weight:600;letter-spacing:.6px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-right:3px;">PLANE</span>
+      <sc-for list="{{ planes }}" as="pl">
+        <button onClick="{{ pl.onClick }}" style="height:26px;padding:0 10px;border-radius:6px;border:1px solid {{ pl.border }};background:{{ pl.bg }};color:{{ pl.fg }};font:500 11px/1 'Inter',sans-serif;cursor:pointer;transition:all .12s;white-space:nowrap;">{{ pl.label }}</button>
+      </sc-for>
+    </div>
+    <div style="flex:1;"></div>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);margin-right:14px;">{{ phaseDesc }}</span>
+    <button onClick="{{ onReset }}" style="height:26px;padding:0 10px;border-radius:6px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);font:500 11px/1 'Inter',sans-serif;cursor:pointer;">Reset View</button>
+  </div>
+
+  <!-- Main -->
+  <div style="flex:1;display:flex;overflow:hidden;">
+    <!-- Canvas -->
+    <div style="flex:1;position:relative;overflow:hidden;">
+      <canvas id="topo-canvas" style="width:100%;height:100%;display:block;cursor:grab;"></canvas>
+
+      <!-- Zoom hint -->
+      <div style="position:absolute;top:12px;left:12px;background:rgba(8,8,8,.82);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 12px;pointer-events:none;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <sc-for list="{{ levelHints }}" as="lh" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div style="width:6px;height:6px;border-radius:1px;background:{{ lh.color }};flex-shrink:0;"></div>
+              <span style="font-size:10px;color:rgba(255,255,255,.5);">{{ lh.label }}</span>
+              <sc-if value="{{ lh.sep }}" hint-placeholder-val="{{ true }}"><span style="font-size:9px;color:rgba(255,255,255,.18);">·</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Bottom hints -->
+      <div style="position:absolute;bottom:14px;left:12px;background:rgba(8,8,8,.8);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:4px 10px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.38);">缩放探索层级 · 点击节点查看详情</span>
+      </div>
+      <div style="position:absolute;bottom:14px;right:12px;background:rgba(8,8,8,.8);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:4px 10px;">
+        <span style="font-size:10px;color:rgba(255,255,255,.3);">拖拽旋转 · Shift平移 · 滚轮缩放</span>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div style="width:236px;flex-shrink:0;background:rgba(8,8,8,.97);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;overflow:hidden;">
+
+      <!-- State -->
+      <div style="padding:14px 14px 12px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:9px;font-weight:600;letter-spacing:.6px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:9px;">STATE · 状态</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:7px;height:7px;border-radius:50%;background:#04D793;flex-shrink:0;"></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.5);">空闲 &lt; 40%</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:7px;height:7px;border-radius:50%;background:#FFAA3B;flex-shrink:0;"></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.5);">中载 40–70%</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:7px;height:7px;border-radius:50%;background:#FF4B7B;flex-shrink:0;"></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.5);">繁忙 &gt; 70%</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:7px;height:7px;border-radius:50%;background:#5A6172;flex-shrink:0;"></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.5);">离线</span></div>
+        </div>
+      </div>
+
+      <!-- Links -->
+      <div style="padding:14px 14px 12px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:9px;font-weight:600;letter-spacing:.6px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:9px;">LINK · 链路</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:26px;height:3px;background:rgba(255,255,255,.55);border-radius:2px;flex-shrink:0;"></div><span style="font-size:11px;color:rgba(255,255,255,.5);">UB Scale-up</span></div>
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:26px;height:0;border-top:2px dashed rgba(255,255,255,.45);flex-shrink:0;"></div><span style="font-size:11px;color:rgba(255,255,255,.5);">RDMA Scale-out</span></div>
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:26px;height:0;border-top:2px dotted rgba(255,255,255,.38);flex-shrink:0;"></div><span style="font-size:11px;color:rgba(255,255,255,.5);">VPC 数据中心</span></div>
+        </div>
+      </div>
+
+      <!-- BW -->
+      <div style="padding:14px 14px 12px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:9px;font-weight:600;letter-spacing:.6px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:9px;">BANDWIDTH · 带宽</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:26px;height:6px;background:rgba(255,255,255,.55);border-radius:3px;flex-shrink:0;"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.45);">D2D 784 GB/s</span></div>
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:26px;height:4px;background:rgba(255,255,255,.4);border-radius:2px;flex-shrink:0;"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.45);">UB 节点内</span></div>
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:26px;height:2px;background:rgba(255,255,255,.3);border-radius:1px;flex-shrink:0;"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.45);">UB-Mesh · RDMA</span></div>
+        </div>
+      </div>
+
+      <!-- Inspector -->
+      <div style="flex:1;padding:14px;overflow:hidden;display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:9px;font-weight:600;letter-spacing:.6px;color:rgba(255,255,255,.3);text-transform:uppercase;">SELECTED · 选中</div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:11px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:8px;word-break:break-all;">{{ inspName }}</div>
+          <sc-for list="{{ inspFields }}" as="f" hint-placeholder-count="0">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+              <span style="font-size:10px;color:rgba(255,255,255,.38);">{{ f.k }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.65);">{{ f.v }}</span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ inspHasUtil }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:8px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:10px;color:rgba(255,255,255,.38);">UTIL</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ inspUtilColor }};">{{ inspUtilPct }}</span>
+              </div>
+              <div style="height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;"><div style="height:100%;width:{{ inspUtilPct }};background:{{ inspUtilColor }};border-radius:2px;transition:width .3s;"></div></div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- Comms -->
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:11px;">
+          <div style="font-size:9px;font-weight:600;letter-spacing:.5px;color:rgba(255,255,255,.28);text-transform:uppercase;margin-bottom:8px;">并行通信 · {{ phaseName }}</div>
+          <sc-for list="{{ comms }}" as="cd" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+              <div style="width:5px;height:5px;border-radius:50%;background:{{ cd.color }};flex-shrink:0;"></div>
+              <span style="font-size:11px;color:rgba(255,255,255,.55);flex:1;">{{ cd.name }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.32);">{{ cd.scope }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 1280, &quot;height&quot;: 720},
+  &quot;phase&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;pretrain&quot;,&quot;prefill&quot;,&quot;decode&quot;], &quot;default&quot;: &quot;pretrain&quot;},
+  &quot;showRDMA&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false},
+  &quot;showVPC&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false}
+}">
+class Component extends DCLogic {
+  state = { phase:'pretrain', planeUB:true, planeRDMA:false, planeVPC:false, sel:null };
+  // Pre-initialize so componentDidUpdate guards work before _init()
+  _clicks=[]; _stats=[]; _links=[]; _lods=[];
+
+  PD = {
+    pretrain:{ name:'预训练', desc:'TP/DP AllReduce 主导', rack:[.82,.85,.79,.88], ubMesh:.78, ubIntra:.70, ubRack:.72, rdma:.45, vpc:.12, d2d:.80, core:.85, hbm:.65, comms:[{name:'TP AllReduce',scope:'SU 超节点内',color:'#4369EF'},{name:'DP AllReduce',scope:'SO 跨超节点',color:'#FFAA3B'},{name:'PP P2P',scope:'跨节点',color:'#FF4B7B'},{name:'SP AllGather',scope:'SU 超节点内',color:'#7C8DB8'}] },
+    prefill:{ name:'Prefill', desc:'算力密集 · AI Core 热点', rack:[.92,.95,.90,.93], ubMesh:.52, ubIntra:.55, ubRack:.50, rdma:.28, vpc:.08, d2d:.60, core:.96, hbm:.45, comms:[{name:'TP AllReduce',scope:'SU 超节点内',color:'#4369EF'},{name:'PP P2P',scope:'跨节点',color:'#FF4B7B'},{name:'SP ReduceScatter',scope:'SU 超节点内',color:'#7C8DB8'}] },
+    decode:{ name:'Decode', desc:'EP-AllToAll · HBM + UB-Mesh 热点', rack:[.65,.72,.68,.70], ubMesh:.92, ubIntra:.88, ubRack:.85, rdma:.65, vpc:.20, d2d:.50, core:.55, hbm:.90, comms:[{name:'EP AllToAll',scope:'SU 超节点内',color:'#FF4B7B'},{name:'DP AllReduce',scope:'SO 跨超节点',color:'#FFAA3B'},{name:'PP P2P',scope:'跨节点',color:'#7C8DB8'}] },
+  };
+
+  _uC(u){ if(u==null)return 0x5A6172; if(u<.4)return 0x04D793; if(u<.7)return 0xFFAA3B; return 0xFF4B7B; }
+  _uH(u){ if(u==null)return'#5A6172'; if(u<.4)return'#04D793'; if(u<.7)return'#FFAA3B'; return'#FF4B7B'; }
+  _pd(){ return this.PD[this.state.phase]; }
+
+  renderVals(){
+    const {phase,planeUB,planeRDMA,planeVPC,sel}=this.state;
+    const pd=this._pd();
+    const btn=(id,lbl,on,fn)=>({label:lbl,onClick:fn,bg:on?'rgba(67,105,239,.16)':'rgba(255,255,255,.04)',border:on?'rgba(67,105,239,.42)':'rgba(255,255,255,.09)',fg:on?'#7c9ef8':'rgba(255,255,255,.52)'});
+    const phases=[btn('pretrain','预训练',phase==='pretrain',()=>this.setState({phase:'pretrain'})),btn('prefill','Prefill',phase==='prefill',()=>this.setState({phase:'prefill'})),btn('decode','Decode',phase==='decode',()=>this.setState({phase:'decode'}))];
+    const planes=[btn('ub','UB Scale-up',planeUB,()=>this.setState(s=>({planeUB:!s.planeUB}))),btn('rdma','RDMA Scale-out',planeRDMA,()=>this.setState(s=>({planeRDMA:!s.planeRDMA}))),btn('vpc','VPC',planeVPC,()=>this.setState(s=>({planeVPC:!s.planeVPC})))];
+    const levelHints=[{label:'L6 机柜 (当前)',color:'#3a3a3a',sep:true},{label:'L5 刀片',color:'#1a3a1a',sep:true},{label:'L4 NPU (缩放可见)',color:'#252525',sep:true},{label:'L3 Die·Core (深度缩放)',color:'#1a0d2e',sep:false}];
+    const u=sel?.util??null;
+    return{phases,planes,phaseDesc:pd.desc,phaseName:pd.name,comms:pd.comms,levelHints,onReset:()=>this._resetCam(),inspName:sel?sel.label:'点击节点查看详情',inspFields:sel?.fields||[],inspHasUtil:typeof u==='number',inspUtilColor:this._uH(u),inspUtilPct:typeof u==='number'?`${Math.round(u*100)}%`:'0%'};
+  }
+
+  componentDidMount(){
+    if(window.THREE){ this._tryInit(); return; }
+    // Inject once — guard against double-load on hot-reload
+    if(document.querySelector('script[data-three]')){ 
+      const wait=()=>window.THREE?this._tryInit():setTimeout(wait,50); wait(); return;
+    }
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js';
+    s.setAttribute('data-three','1');
+    s.onload=()=>this._tryInit();
+    s.onerror=()=>console.error('Three.js failed to load');
+    document.head.appendChild(s);
+  }
+  componentDidUpdate(pp,ps){
+    if(!this._scene)return;
+    if(ps.phase!==this.state.phase)this._refreshColors();
+    if(ps.planeUB!==this.state.planeUB||ps.planeRDMA!==this.state.planeRDMA||ps.planeVPC!==this.state.planeVPC)this._refreshPlanes();
+  }
+  componentWillUnmount(){
+    cancelAnimationFrame(this._raf);
+    if(this._renderer){ try{this._renderer.forceContextLoss();}catch(e){} this._renderer.dispose(); }
+    this._ro?.disconnect();
+    const c=document.getElementById('topo-canvas');
+    if(c){c.removeEventListener('mousedown',this._md);c.removeEventListener('mousemove',this._mm);c.removeEventListener('mouseup',this._mu);c.removeEventListener('wheel',this._mw);}
+  }
+
+  _tryInit(){ if(window.THREE){this._T=window.THREE;this._init();this._buildAll();this._loop();}else setTimeout(()=>this._tryInit(),80); }
+
+  _init(){
+    const T=this._T, cv=document.getElementById('topo-canvas'), w=cv.clientWidth, h=cv.clientHeight;
+    this._renderer=new T.WebGLRenderer({canvas:cv,antialias:true});
+    this._renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    this._renderer.setSize(w,h,false);
+    this._renderer.setClearColor(0x0d0d0d,1);
+    this._scene=new T.Scene();
+    this._scene.fog=new T.FogExp2(0x0d0d0d,.018);
+    this._cam=new T.PerspectiveCamera(45,w/h,.005,500);
+    this._scene.add(new T.AmbientLight(0xffffff,.4));
+    const key=new T.DirectionalLight(0xffffff,.8); key.position.set(10,14,8); this._scene.add(key);
+    const fill=new T.DirectionalLight(0x8090c0,.22); fill.position.set(-8,5,-5); this._scene.add(fill);
+    this._scene.add(new T.GridHelper(50,50,0x1a1a1a,0x161616));
+    this._grp=new T.Group(); this._scene.add(this._grp);
+    this._orb={th:.52,ph:.60,r:22,tx:0,ty:1.8,tz:0};
+    this._updateCam();
+    this._clicks=[]; this._stats=[]; this._links=[]; this._lods=[];
+    this._setupEvents(cv);
+    this._ro=new ResizeObserver(()=>{const w2=cv.clientWidth,h2=cv.clientHeight;this._cam.aspect=w2/h2;this._cam.updateProjectionMatrix();this._renderer.setSize(w2,h2,false);}); this._ro.observe(cv.parentElement);
+  }
+
+  _setupEvents(cv){
+    let md={x:0,y:0},ic=false;
+    this._md=(e)=>{md={x:e.clientX,y:e.clientY};ic=true;cv.style.cursor='grabbing';};
+    this._mm=(e)=>{
+      if(!e.buttons)return;
+      if(Math.abs(e.clientX-md.x)>4||Math.abs(e.clientY-md.y)>4)ic=false;
+      const dx=e.clientX-md.x,dy=e.clientY-md.y;
+      if(e.shiftKey){this._orb.tx-=dx*.025;this._orb.tz-=dy*.025;}
+      else{this._orb.th-=dx*.008;this._orb.ph=Math.max(.1,Math.min(1.5,this._orb.ph+dy*.006));}
+      md={x:e.clientX,y:e.clientY}; this._updateCam();
+    };
+    this._mu=(e)=>{cv.style.cursor='grab';if(ic)this._pick(e,cv);ic=false;};
+    this._mw=(e)=>{e.preventDefault();this._orb.r=Math.max(.3,Math.min(65,this._orb.r+e.deltaY*.03));this._updateCam();};
+    cv.addEventListener('mousedown',this._md); cv.addEventListener('mousemove',this._mm); cv.addEventListener('mouseup',this._mu); cv.addEventListener('wheel',this._mw,{passive:false});
+  }
+
+  _updateCam(){ const o=this._orb; this._cam.position.set(o.tx+o.r*Math.sin(o.ph)*Math.sin(o.th),o.ty+o.r*Math.cos(o.ph),o.tz+o.r*Math.sin(o.ph)*Math.cos(o.th)); this._cam.lookAt(o.tx,o.ty,o.tz); }
+  _tweenOrb(t,ms=620){ const s={...this._orb},t0=Date.now(),tick=()=>{const tt=Math.min((Date.now()-t0)/ms,1),e=tt<.5?2*tt*tt:-1+(4-2*tt)*tt;for(const k of['th','ph','r','tx','ty','tz'])this._orb[k]=s[k]+(t[k]-s[k])*e;this._updateCam();if(tt<1)requestAnimationFrame(tick);};requestAnimationFrame(tick);}
+  _resetCam(){ this._tweenOrb({th:.52,ph:.60,r:22,tx:0,ty:1.8,tz:0}); }
+
+  _loop=()=>{
+    this._raf=requestAnimationFrame(this._loop);
+    this._updateLOD();
+    this._renderer?.render(this._scene,this._cam);
+  };
+
+  _updateLOD(){
+    if(!this._lods.length||!this._cam)return;
+    const cp=this._cam.position;
+    this._lods.forEach(l=>{
+      if(l.wpx===null)return; // not yet resolved
+      const dx=cp.x-l.wpx,dy=cp.y-l.wpy,dz=cp.z-l.wpz;
+      l.obj.visible=(dx*dx+dy*dy+dz*dz)<(l.thr*l.thr);
+    });
+  }
+
+  _pick(e,cv){
+    const T=this._T,rect=cv.getBoundingClientRect();
+    const m=new T.Vector2(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);
+    const rc=new T.Raycaster(); rc.setFromCamera(m,this._cam);
+    const hits=rc.intersectObjects(this._clicks.map(c=>c.mesh),false);
+    if(!hits.length)return;
+    const found=this._clicks.find(c=>c.mesh===hits[0].object);
+    if(found)found.fn(found.data);
+  }
+
+  _clr(){ while(this._grp.children.length){const c=this._grp.children[0];this._grp.remove(c);this._disp(c);} this._clicks=[];this._stats=[];this._links=[];this._lods=[];}
+  _disp(o){if(!o)return;o.geometry?.dispose();if(o.material){Array.isArray(o.material)?o.material.forEach(m=>m.dispose()):o.material.dispose();}o.children?.forEach(c=>this._disp(c));}
+  _box(w,h,d){ return new this._T.BoxGeometry(w,h,d); }
+  _std(c,r=.75,m=.35){ return new this._T.MeshStandardMaterial({color:c,roughness:r,metalness:m}); }
+  _bas(c){ return new this._T.MeshBasicMaterial({color:c}); }
+  _tube(a,b,rad,col,seg=4){ const T=this._T,path=new T.CatmullRomCurve3([new T.Vector3(...a),new T.Vector3(...b)]);return new T.Mesh(new T.TubeGeometry(path,2,rad,seg,false),new T.MeshBasicMaterial({color:col})); }
+  _line(a,b,col,dash=false){ const T=this._T,geo=new T.BufferGeometry().setFromPoints([new T.Vector3(...a),new T.Vector3(...b)]);let mat;if(dash)mat=new T.LineDashedMaterial({color:col,dashSize:.7,gapSize:.4});else mat=new T.LineBasicMaterial({color:col});const l=new T.Line(geo,mat);if(dash)l.computeLineDistances();return l; }
+  _addSt(m,fn){ this._stats.push({mesh:m,fn}); }
+  _addLk(o,pl,fn){ this._links.push({obj:o,plane:pl,fn}); }
+  _addCl(m,d,fn){ this._clicks.push({mesh:m,data:d,fn}); }
+  _addLOD(obj,threshold){ this._lods.push({obj,thr:threshold,wpx:null}); obj.visible=false; }
+
+  _refreshColors(){ this._stats.forEach(s=>{if(s.mesh?.material)s.mesh.material.color.setHex(this._uC(s.fn()));});this._links.forEach(l=>{if(l.obj?.material)l.obj.material.color.setHex(this._uC(l.fn()));}); }
+  _refreshPlanes(){ const {planeUB,planeRDMA,planeVPC}=this.state;this._links.forEach(l=>{const on={ub:planeUB,rdma:planeRDMA,vpc:planeVPC}[l.plane];if(l.obj)l.obj.visible=!!on;}); }
+
+  // ══════════════════════════════════════════════════════
+  // Build entire hierarchy in a single scene
+  // ══════════════════════════════════════════════════════
+  _buildAll(){
+    this._clr();
+    const T=this._T, pd=this._pd();
+    const RACK_X=[-4.5,-1.5,1.5,4.5], RACK_H=3.6;
+
+    // SuperPod floor boundary (wireframe)
+    const bndGeo=new T.EdgesGeometry(new T.BoxGeometry(11.5,.05,4));
+    const bnd=new T.LineSegments(bndGeo,new T.LineBasicMaterial({color:0x222222})); bnd.position.set(0,-.02,0); this._grp.add(bnd);
+
+    // Spine switches
+    [{z:-1.8},{z:1.8}].forEach(({z},si)=>{
+      const sg=new T.Group(); sg.position.set(0,RACK_H+1.3,z);
+      const b=new T.Mesh(this._box(11.8,.22,.88),this._std(0x0d1a30,.5,.65)); sg.add(b);
+      for(let p=0;p<18;p++){const pm=new T.Mesh(this._box(.12,.12,.02),this._bas(this._uC(pd.ubMesh)));pm.position.set(-5.2+p*.58,0,.45);sg.add(pm);this._addSt(pm,()=>this._pd().ubMesh);}
+      const lpo=new T.Mesh(this._box(11.6,.04,.36),this._std(0x0d2035,.6,.5));lpo.position.y=.12;sg.add(lpo);
+      this._grp.add(sg);
+    });
+
+    // 4 Racks, each with full nested hierarchy
+    RACK_X.forEach((rx,ri)=>{
+      const rg=this._buildRack(rx,ri,RACK_H,pd);
+      this._grp.add(rg);
+    });
+
+    // UB-Mesh connections (rack tops → spines)
+    if(this.state.planeUB){
+      RACK_X.forEach((rx)=>{
+        [{z:-1.8},{z:1.8}].forEach(({z})=>{
+          const u=pd.ubMesh,col=this._uC(u);
+          const t=this._tube([rx,RACK_H,0],[0,RACK_H+1.3,z],.024,col);
+          this._grp.add(t); this._addLk(t,'ub',()=>this._pd().ubMesh);
+        });
+      });
+      // Spine-to-spine
+      const t=this._tube([0,RACK_H+1.3,-1.8],[0,RACK_H+1.3,1.8],.04,this._uC(pd.ubMesh));
+      this._grp.add(t); this._addLk(t,'ub',()=>this._pd().ubMesh);
+    }
+
+    // RDMA scale-out (to far superpods)
+    if(this.state.planeRDMA){
+      RACK_X.forEach(rx=>{
+        [-13,13].forEach(fx=>{
+          const l=this._line([rx,RACK_H*.75,0],[fx,RACK_H*.75,0],this._uC(pd.rdma),true);
+          this._grp.add(l); this._addLk(l,'rdma',()=>this._pd().rdma);
+        });
+      });
+    }
+
+    // VPC
+    if(this.state.planeVPC){
+      RACK_X.forEach(rx=>{
+        const T2=T,pts=[new T2.Vector3(rx,.4,0),new T2.Vector3(rx,.4,8)];
+        const l=new T2.Line(new T2.BufferGeometry().setFromPoints(pts),new T2.LineDashedMaterial({color:this._uC(pd.vpc),dashSize:.3,gapSize:.15}));
+        l.computeLineDistances(); this._grp.add(l); this._addLk(l,'vpc',()=>this._pd().vpc);
+      });
+    }
+
+    // Resolve LOD world positions after scene graph is fully assembled
+    this._scene.updateMatrixWorld(true);
+    const _tmp=new this._T.Vector3();
+    this._lods.forEach(l=>{
+      l.obj.getWorldPosition(_tmp);
+      l.wpx=_tmp.x; l.wpy=_tmp.y; l.wpz=_tmp.z;
+    });
+  }
+
+  _buildRack(rx,ri,H,pd){
+    const T=this._T, rg=new T.Group(); rg.position.set(rx,0,0);
+    const W=.88,D=.7;
+
+    // Open frame: corner posts
+    const postMat=this._std(0x1e1e1e,.8,.5);
+    const postGeo=this._box(.04,H,.04);
+    [[-W/2,-D/2],[-W/2,D/2],[W/2,-D/2],[W/2,D/2]].forEach(([px,pz])=>{
+      const p=new T.Mesh(postGeo,postMat); p.position.set(px,H/2,pz); rg.add(p);
+    });
+    // Top/bottom plates
+    const plateMat=this._std(0x1e1e1e,.8,.4);
+    const top=new T.Mesh(this._box(W,.03,D),plateMat); top.position.y=H+.015; rg.add(top);
+    const bot=new T.Mesh(this._box(W,.03,D),plateMat); bot.position.y=-.015; rg.add(bot);
+    // U-slot horizontal rails
+    for(let u=0;u<10;u++){const r=new T.Mesh(this._box(W,.006,D),this._std(0x232323,.9,.2));r.position.y=.28+u*.34;rg.add(r);}
+    // State LED column (right post)
+    const ledMat=new T.MeshBasicMaterial({color:this._uC(pd.rack[ri])});
+    const led=new T.Mesh(this._box(.03,H,.03),ledMat); led.position.set(W/2+.02,H/2,D/2-.04); rg.add(led);
+    this._addSt(led,()=>this._pd().rack[ri]);
+    // Casters
+    const cg=new T.CylinderGeometry(.05,.05,.07,7);
+    [[-W*.4,-D*.3],[-W*.4,D*.3],[W*.4,-D*.3],[W*.4,D*.3]].forEach(([cx,cz])=>{const c=new T.Mesh(cg,this._std(0x282828,.7,.5));c.position.set(cx,.035,cz);rg.add(c);});
+    // L2 switch (top area)
+    const l2=new T.Mesh(this._box(W-.06,.2,D-.08),this._std(0x0d1a30,.5,.65)); l2.position.set(0,H-.12,0); rg.add(l2);
+    for(let p=0;p<8;p++){const pm=new T.Mesh(this._box(.04,.04,.02),this._bas(this._uC(pd.ubRack)));pm.position.set(-.26+p*.075,H-.12,D/2-.02);rg.add(pm);this._addSt(pm,()=>this._pd().ubRack);}
+    // Rack click (select rack)
+    const rhm=new T.Mesh(this._box(W,H,D),new T.MeshBasicMaterial({visible:false})); rhm.position.y=H/2; rg.add(rhm);
+    this._addCl(rhm,{ri},(d)=>{ const u=this._pd().rack[d.ri]; this.setState({sel:{label:`Rack-0${d.ri+1}`,util:u,fields:[{k:'L6 Rack',v:'机柜'},{k:'Blades',v:'6'},{k:'NPU/rack',v:'48'},{k:'L2 Switch',v:'×1'},{k:'→ Spine',v:'×2 UB-Mesh'}]}});});
+
+    // 6 Blades inside rack
+    const BLADE_Y=[.3,.84,1.38,1.92,2.46,3.0];
+    BLADE_Y.forEach((by,bi)=>{
+      const bg=this._buildBlade(ri,bi,by,W-.1,pd,D-.08); rg.add(bg);
+    });
+
+    // Blade-to-L2 connections (UB rack)
+    if(this.state.planeUB){
+      BLADE_Y.forEach((by)=>{
+        const u=pd.ubRack,col=this._uC(u);
+        const t=this._tube([W*.35,by,0],[0,H-.12,0],.015,col);
+        rg.add(t); this._addLk(t,'ub',()=>this._pd().ubRack);
+      });
+    }
+
+    return rg;
+  }
+
+  _buildBlade(ri,bi,by,W,pd,D){
+    const T=this._T, bg=new T.Group(); bg.position.set(0,by,0);
+    const H=.18;
+    // PCB (always visible)
+    const pcbMat=this._std(0x0d1a0d,.85,.2);
+    bg.add(new T.Mesh(this._box(W,H,D),pcbMat));
+    // Front face handles
+    const hdMat=this._std(0x2a2a2a,.7,.5);
+    [[-W*.44],[W*.44]].forEach(([hx])=>{const h=new T.Mesh(this._box(.12,H*.55,.1),hdMat);h.position.set(hx,0,D/2+.05);bg.add(h);});
+    // State LED on front
+    const util=pd.rack[ri]*(.86+bi*.025);
+    const led=new T.Mesh(this._box(W-.3,.02,.02),this._bas(this._uC(util))); led.position.set(0,H/2+.01,D/2+.01); bg.add(led);
+    this._addSt(led,()=>this._pd().rack[ri]*(.86+bi*.025));
+    // Heat spreader bumps on top (always visible schematic of NPUs)
+    for(let n=0;n<8;n++){
+      const hs=new T.Mesh(this._box(.07,.05,.18),this._std(0x262626,.5,.7));
+      hs.position.set(-W*.42+n*.12,H/2+.025,0); bg.add(hs);
+    }
+    // CPU bump
+    const cpu=new T.Mesh(this._box(.1,.06,.14),this._std(0x181828,.4,.8)); cpu.position.set(0,H/2+.03,D*.3); bg.add(cpu);
+
+    // ── NPU detail group (LOD threshold: 4.5 units) ──
+    const npuDG=new T.Group(); npuDG.position.set(0,H/2+.001,0);
+    // L1 switch slab
+    const l1=new T.Mesh(this._box(W,.022,.05),this._std(0x0d1a30,.5,.7)); l1.position.set(0,.22,0); npuDG.add(l1);
+    for(let p=0;p<8;p++){const pm=new T.Mesh(this._box(.04,.02,.02),this._bas(this._uC(pd.ubIntra)));pm.position.set(-W*.44+p*.13,.22,.026);npuDG.add(pm);this._addSt(pm,()=>this._pd().ubIntra);}
+    // CPU chip detail
+    const cpuD=new T.Mesh(this._box(.1,.06,.14),this._std(0x181828,.4,.8)); cpuD.position.set(0,.03,D*.3); npuDG.add(cpuD);
+    for(let f=0;f<4;f++){const fin=new T.Mesh(this._box(.1,.06,.02),this._std(0x20203a,.5,.8));fin.position.set(0,.035,-D*.18+f*.06);npuDG.add(fin);}
+
+    // 8 NPU chips
+    for(let ni=0;ni<8;ni++){
+      const nx=-W*.44+ni*.125;
+      const ng=this._buildNpu(ri,bi,ni,nx,pd,W); npuDG.add(ng);
+    }
+
+    // NPU-to-L1 UB connections
+    if(this.state.planeUB){
+      for(let ni=0;ni<8;ni++){
+        const nx=-W*.44+ni*.125;
+        const u=pd.ubIntra,col=this._uC(u);
+        const t=this._tube([nx,.08,0],[0,.22,0],.004,col);
+        npuDG.add(t); this._addLk(t,'ub',()=>this._pd().ubIntra);
+      }
+    }
+
+    bg.add(npuDG);
+    this._addLOD(npuDG,4.5);
+
+    return bg;
+  }
+
+  _buildNpu(ri,bi,ni,nx,pd,bladeW){
+    const T=this._T, ng=new T.Group(); ng.position.set(nx,0,0);
+    const W=.095,H=.12,D=.26;
+    // Chip body + heat spreader
+    ng.add(new T.Mesh(this._box(W,H,D),this._std(0x252525,.5,.72)));
+    // Fins
+    for(let f=0;f<4;f++){const fin=new T.Mesh(this._box(.01,H+.02,D),this._std(0x2e2e2e,.5,.7));fin.position.set(-W*.35+f*.022,0,0);ng.add(fin);}
+    // Gold connector edge
+    const conn=new T.Mesh(this._box(W,.03,.02),this._std(0x8B6914,.3,.9)); conn.position.set(0,-H/2-.015,-D/2+.01); ng.add(conn);
+    // State LED
+    const util=pd.rack[ri]*(.86+bi*.025)*(.9+ni*.01);
+    const led=new T.Mesh(this._box(W,.007,.007),this._bas(this._uC(util))); led.position.set(0,H/2+.004,D/2+.004); ng.add(led);
+    this._addSt(led,()=>this._pd().rack[ri]*(.86+bi*.025)*(.9+ni*.01));
+
+    // ── Die detail group (LOD: 1.5 units) ──
+    const dieDG=new T.Group(); dieDG.position.y=H/2+.002;
+    [-.028,.028].forEach((dx,di)=>{
+      const dg=this._buildDie(di,dx,pd); dieDG.add(dg);
+    });
+    // D2D thick tube
+    const d2d=this._tube([-.022,.008,0],[.022,.008,0],.007,this._uC(pd.d2d));
+    dieDG.add(d2d); this._addLk(d2d,'ub',()=>this._pd().d2d);
+
+    ng.add(dieDG);
+    this._addLOD(dieDG,1.5);
+
+    // NPU click
+    const hm=new T.Mesh(this._box(W+.01,H+.01,D+.01),new T.MeshBasicMaterial({visible:false})); ng.add(hm);
+    const rank=ri*48+bi*8+ni;
+    this._addCl(hm,{ri,bi,ni},(d)=>{ const u=this._pd().rack[d.ri]*(.86+d.bi*.025)*(.9+d.ni*.01); this.setState({sel:{label:`NPU-${rank}`,util:u,fields:[{k:'L4 NPU/Card',v:`rank-${rank}`},{k:'Die',v:'×2 (UMA=1 rank)'},{k:'D2D',v:'784 GB/s'},{k:'HBM',v:'×4 stack (待核)'}]}});});
+    return ng;
+  }
+
+  _buildDie(di,dx,pd){
+    const T=this._T, dg=new T.Group(); dg.position.set(dx,0,0);
+    const W=.038,H=.036,D=.12;
+    // Die body
+    dg.add(new T.Mesh(this._box(W,H,D),this._std(0x1a1a1a,.6,.5)));
+    // Core grid on top surface
+    for(let gx=0;gx<6;gx++){const r=new T.Mesh(this._box(W,.002,.003),this._bas(0x2a2a2a));r.position.set(0,H/2+.001,-D*.45+gx*.018);dg.add(r);}
+    for(let gz=0;gz<3;gz++){const c=new T.Mesh(this._box(.003,.002,D),this._bas(0x2a2a2a));c.position.set(-W*.3+gz*.01,H/2+.001,0);dg.add(c);}
+    // HBM stack (beside die)
+    const hbmX=di===0?-W*.85:W*.85;
+    for(let h=0;h<3;h++){const hm=new T.Mesh(this._box(.018,.008+h*.003,D*.9),this._std(0x1a0d2e,.5,.7));hm.position.set(hbmX,.004+h*.01,0);dg.add(hm);}
+    // HBM state LED
+    const hled=new T.Mesh(this._box(.018,.003,.003),this._bas(this._uC(pd.hbm))); hled.position.set(hbmX,H/2,.048); dg.add(hled);
+    this._addSt(hled,()=>this._pd().hbm);
+    // Die state LED
+    const dled=new T.Mesh(this._box(W,.003,.003),this._bas(this._uC(pd.d2d))); dled.position.set(0,H/2+.002,D/2+.002); dg.add(dled);
+    this._addSt(dled,()=>this._pd().d2d);
+
+    // ── AI Core grid (LOD: 0.45 units) ──
+    const coreDG=new T.Group(); coreDG.position.y=H/2+.001;
+    for(let cr=0;cr<2;cr++){
+      for(let cc=0;cc<4;cc++){
+        const ci=cr*4+cc;
+        const cUtil=pd.core*(.85+ci*.02);
+        // AIC block
+        const aicMat=new T.MeshBasicMaterial({color:this._uC(cUtil)});
+        const aicM=new T.Mesh(this._box(W*.36,.001,D*.17),aicMat);
+        aicM.position.set(-W*.2+cr*W*.4,.0005,-D*.38+cc*D*.25);
+        coreDG.add(aicM);
+        this._addSt(aicM,()=>this._pd().core*(.85+ci*.02));
+      }
+    }
+    dg.add(coreDG);
+    this._addLOD(coreDG,.45);
+
+    // Die click
+    const hm=new T.Mesh(this._box(W+.005,H+.005,D+.005),new T.MeshBasicMaterial({visible:false})); dg.add(hm);
+    this._addCl(hm,{di},(d)=>{ this.setState({sel:{label:`Die-${d.di}`,util:this._pd().d2d,fields:[{k:'L3 Die',v:'计算晶粒'},{k:'AI Cores',v:'2×4 = 8'},{k:'D2D',v:'784 GB/s'},{k:'NoC',v:'On-die'},{k:'HBM',v:'紧邻堆叠'}]}});});
+    return dg;
+  }
+}
+
+</script>
+</body>
+</html>
