@@ -1,0 +1,60 @@
+/*
+ * PTO Design System — foundation tokens (standalone fallback).
+ *
+ * The original design-system CSS is not shipped with the .dc.html exports.
+ * This file re-declares the CSS custom properties the components reference so
+ * the pages are styled correctly on plain static hosting.
+ *
+ * Default (:root) = dark theme. The components set data-theme="light" on
+ * <html> for the light theme (and remove it to go dark), matching the JS
+ * color palettes (_CL / _CD) in the components.
+ */
+
+:root {
+  /* Surfaces & text — dark theme (matches _CD.BG #313232) */
+  --background: #313232;
+  --surface-1: #3c3d3d;
+  --foreground: #ededed;
+  --foreground-secondary: #c4c4c6;
+  --foreground-muted: #9a9b9d;
+  --foreground-disabled: #6a6b6d;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.32);
+
+  /* Typography */
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-size-title-sm: 13px;
+  --font-size-body-sm: 12px;
+  --font-size-label-xs: 10px;
+  --font-weight-semibold: 600;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+
+  /* Component tokens */
+  --comp-toolbar-height: 44px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+}
+
+html[data-theme='light'] {
+  /* Light theme (matches _CL.BG #F0F1F1) */
+  --background: #f0f1f1;
+  --surface-1: #e6e7e8;
+  --foreground: #1a1b1c;
+  --foreground-secondary: #44464a;
+  --foreground-muted: #78797d;
+  --foreground-disabled: #a8a9ad;
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.16);
+  --border-strong: rgba(0, 0, 0, 0.32);
+}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>昇腾超节点 3D 拓扑设计库</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#0d0d0d;--fg:rgba(255,255,255,.9);--muted:rgba(255,255,255,.45);--card:rgba(255,255,255,.03);--border:rgba(255,255,255,.09);--accent:#4369EF;}
+  html,body{background:var(--bg);color:var(--fg);font-family:'Inter','Source Han Sans SC','PingFang SC',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  .wrap{max-width:920px;margin:0 auto;padding:64px 24px 80px;}
+  header{margin-bottom:40px;}
+  .kicker{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.5px;color:var(--muted);margin-bottom:12px;}
+  h1{font-size:30px;font-weight:700;letter-spacing:-.5px;margin-bottom:10px;}
+  .sub{font-size:15px;color:var(--muted);line-height:1.6;max-width:640px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:36px;}
+  a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:border-color .15s,background .15s,transform .15s;}
+  a.card:hover{border-color:var(--accent);background:rgba(67,105,239,.07);transform:translateY(-2px);}
+  .lv{display:inline-block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);border:1px solid rgba(67,105,239,.4);border-radius:5px;padding:2px 7px;margin-bottom:12px;}
+  .card h2{font-size:16px;font-weight:600;margin-bottom:6px;}
+  .card p{font-size:13px;color:var(--muted);line-height:1.55;}
+  footer{margin-top:56px;padding-top:24px;border-top:1px solid var(--border);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--muted);line-height:1.9;}
+  footer a{color:var(--muted);}
+  .note{margin-top:20px;font-size:12px;color:var(--muted);line-height:1.7;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">PTO · Ascend Super Node</div>
+    <h1>昇腾超节点 3D 拓扑设计库</h1>
+    <p class="sub">硬件图元 3D / 2D 设计库与全层级超节点拓扑视图。基于 Three.js 与 PTO 设计系统。</p>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="昇腾超节点3D拓扑.dc.html">
+      <span class="lv">L1–L7 · 3D</span>
+      <h2>昇腾超节点 3D 拓扑</h2>
+      <p>全层级同屏 3D 拓扑：机柜 → 刀片 → NPU → Die → Core，缩放探索、并行相位与链路平面切换。</p>
+    </a>
+    <a class="card" href="硬件图元库.dc.html">
+      <span class="lv">13 图元 · 3D+2D</span>
+      <h2>硬件图元库（合并）</h2>
+      <p>3D 模型与 2D 图标双 Tab 合并库，含状态下钻高亮与浅/深色切换。</p>
+    </a>
+    <a class="card" href="硬件图元设计库.dc.html">
+      <span class="lv">13 图元 · 3D</span>
+      <h2>硬件图元设计库</h2>
+      <p>13 个硬件图元的 Three.js 三维展示，13 图元 × 6 状态，悬停选中。</p>
+    </a>
+    <a class="card" href="硬件图元图标库.dc.html">
+      <span class="lv">13 图元 · 2D</span>
+      <h2>硬件图元图标库</h2>
+      <p>13 个硬件图元的 2D SVG 图标，13 图元 × 6 状态网格。</p>
+    </a>
+  </div>
+
+  <div class="note">
+    这些页面原为 DC 设计平台导出文件。本站点内置了轻量 <code>support.js</code> 运行时（基于 React）
+    与设计系统 CSS，使其可在 GitHub Pages 等静态托管上直接渲染。Three.js / React 已本地内置于
+    <code>vendor/</code>，无需外部 CDN。
+  </div>
+
+  <footer>
+    昇腾超节点 3D 拓扑设计库 · v2.1<br>
+    源码：<a href="https://github.com/Cinnnnnnndy/hpc-topology-node">github.com/Cinnnnnnndy/hpc-topology-node</a>
+  </footer>
+</div>
+</body>
+</html>

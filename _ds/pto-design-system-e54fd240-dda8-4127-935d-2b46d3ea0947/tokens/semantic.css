@@ -1,0 +1,5 @@
+/*
+ * PTO Design System — semantic tokens (standalone fallback).
+ * Semantic aliases are folded into foundation.css for this standalone build;
+ * this file is kept so the component <link> references resolve without 404s.
+ */

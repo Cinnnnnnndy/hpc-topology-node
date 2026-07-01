@@ -1,0 +1,11 @@
+/*
+ * PTO Design System — base stylesheet (standalone fallback).
+ * Minimal resets that the exported components assume are present.
+ */
+* , *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Inter', 'Source Han Sans SC', 'PingFang SC', system-ui, sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+}
