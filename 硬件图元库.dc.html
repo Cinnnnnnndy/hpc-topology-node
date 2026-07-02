@@ -922,6 +922,9 @@ void main(){
     this._raf=requestAnimationFrame(this._tickFn);
     if(!this._renderer||!this._W||!this._H||this.state.tab!=='3d') return;
     const W=this._W,H=this._H,cW=Math.floor(W/4),cH=Math.floor(H/4);
+    this._renderer.setScissorTest(false);
+    this._renderer.setViewport(0,0,W,H);
+    this._renderer.clear();
     this._cells3d.forEach((cell,i)=>{
       if(!cell) return;
       cell.rg.rotation.y+=.005;
